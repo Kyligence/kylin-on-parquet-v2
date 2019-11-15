@@ -442,6 +442,7 @@ public class KylinConfig extends KylinConfigBase {
     // ============================================================================
 
     transient Map<Class, Object> managersCache = new ConcurrentHashMap<>();
+    transient ConcurrentHashMap<Class, ConcurrentHashMap<String, Object>> managersByPrjCache = null;
 
     private KylinConfig() {
         super();
@@ -480,6 +481,42 @@ public class KylinConfig extends KylinConfigBase {
                 throw new RuntimeException(e);
             }
             managersCache.put(clz, mgr);
+        }
+        return (T) mgr;
+    }
+
+    public <T> T getManager(String project, Class<T> clz) {
+        KylinConfig base = base();
+        if (base != this)
+            return base.getManager(project, clz);
+
+        ConcurrentHashMap<String, Object> mgrMap = (null == managersByPrjCache) ? null : managersByPrjCache.get(clz);
+        Object mgr = (null == mgrMap) ? null : mgrMap.get(project);
+        if (mgr != null)
+            return (T) mgr;
+
+        synchronized (this) {
+            if (null == managersByPrjCache)
+                managersByPrjCache = new ConcurrentHashMap<>();
+
+            mgrMap = managersByPrjCache.get(clz);
+            if (mgrMap == null)
+                mgrMap = new ConcurrentHashMap<>();
+
+            mgr = mgrMap.get(project);
+            if (mgr != null)
+                return (T) mgr;
+
+            try {
+                // new manager via static Manager.newInstance()
+                Method method = clz.getDeclaredMethod("newInstance", KylinConfig.class, String.class);
+                method.setAccessible(true); // override accessibility
+                mgr = method.invoke(null, this, project);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            mgrMap.put(project, mgr);
+            managersByPrjCache.put(clz, mgrMap);
         }
         return (T) mgr;
     }

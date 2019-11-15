@@ -23,6 +23,8 @@ import org.apache.kylin.cube.model.CubeDesc;
 import org.apache.kylin.job.execution.DefaultChainedExecutable;
 import org.apache.kylin.metadata.model.IJoinedFlatTableDesc;
 
+import java.util.Set;
+
 public interface IBatchCubingEngine {
     
     /** Mark deprecated to indicate for test purpose only */

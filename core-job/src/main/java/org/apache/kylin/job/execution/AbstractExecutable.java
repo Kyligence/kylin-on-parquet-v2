@@ -71,6 +71,42 @@ public abstract class AbstractExecutable implements Executable, Idempotent {
     private AbstractExecutable parentExecutable = null;
     private Map<String, String> params = Maps.newHashMap();
     protected Integer priority;
+    private JobTypeEnum jobType;
+    protected String project;
+    private String targetSubject;   //uuid of the model or table identity if table sampling
+    private List<String> targetSegments = Lists.newArrayList(); //uuid of related segments
+
+    public List<String> getTargetSegments() {
+        return targetSegments;
+    }
+
+    public void setTargetSegments(List<String> targetSegments) {
+        this.targetSegments = targetSegments;
+    }
+
+    public String getTargetSubject() {
+        return targetSubject;
+    }
+
+    public void setTargetSubject(String targetSubject) {
+        this.targetSubject = targetSubject;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
+    }
+
+    public JobTypeEnum getJobType() {
+        return jobType;
+    }
+
+    public void setJobType(JobTypeEnum jobType) {
+        this.jobType = jobType;
+    }
 
     public AbstractExecutable() {
         setId(RandomUtil.randomUUID().toString());

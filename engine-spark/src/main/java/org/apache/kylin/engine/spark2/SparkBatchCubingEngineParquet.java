@@ -22,6 +22,7 @@ import org.apache.kylin.cube.CubeSegment;
 import org.apache.kylin.cube.model.CubeDesc;
 import org.apache.kylin.engine.IBatchCubingEngine;
 import org.apache.kylin.engine.spark2.job.SparkCubingJob;
+import org.apache.kylin.engine.spark2.metadata.cube.model.NDataSegment;
 import org.apache.kylin.job.execution.DefaultChainedExecutable;
 import org.apache.kylin.metadata.model.IJoinedFlatTableDesc;
 import org.spark_project.guava.collect.Sets;
@@ -39,7 +40,9 @@ public class SparkBatchCubingEngineParquet implements IBatchCubingEngine {
 
     @Override
     public DefaultChainedExecutable createBatchCubingJob(CubeSegment newSegment, String submitter, Integer priorityOffset) {
-        return SparkCubingJob.create(Sets.newHashSet(newSegment), null, null);
+        NDataSegment segment = new NDataSegment();
+        segment.setSegmentRange(newSegment.getSegRange());
+        return SparkCubingJob.create(Sets.newHashSet(segment), null, null);
     }
 
     @Override
