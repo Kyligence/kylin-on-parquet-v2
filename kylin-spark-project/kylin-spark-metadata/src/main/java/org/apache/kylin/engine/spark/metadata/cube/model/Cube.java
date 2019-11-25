@@ -21,7 +21,7 @@ package org.apache.kylin.engine.spark.metadata.cube.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
-import org.apache.kylin.engine.spark.metadata.ModelDesc;
+import org.apache.kylin.metadata.MetadataConstants;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -62,6 +62,7 @@ public class Cube extends RootPersistentEntity {
     public String getResourcePath() {
         return concatResourcePath(getUuid(), project);
     }
+
     public static String concatResourcePath(String name, String project) {
         return "/" + project + CUBE_RESOURCE_ROOT + "/" + name + FILE_SURFIX;
     }
