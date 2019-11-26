@@ -55,7 +55,7 @@ public class Cube extends RootPersistentEntity {
         this.addIndexEntities(indexEntities);
         return this;
     }
-
+  
     public DataModel getDataModel() {
         return dataModel;
     }
@@ -63,7 +63,7 @@ public class Cube extends RootPersistentEntity {
     public void setDataModel(DataModel dataModel) {
         this.dataModel = dataModel;
     }
-
+  
     private List<IndexEntity> IndexEntities = new ArrayList<>();
 
     private List<DimensionDesc> dimensions = new ArrayList<>();
@@ -132,6 +132,10 @@ public class Cube extends RootPersistentEntity {
         this.IndexEntities.addAll(indexes);
     }
 
+    public void addIndexEntities(List<IndexEntity> indexEntities) {
+        this.getIndexEntities().addAll(indexEntities);
+    }
+
     public List<DimensionDesc> getDimensions() {
         return dimensions;
     }
@@ -154,5 +158,7 @@ public class Cube extends RootPersistentEntity {
     public void setProject(String project) {
         this.project = project;
     }
+
+
 
 }
