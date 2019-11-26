@@ -62,7 +62,7 @@ public class LayoutEntity implements IStorageAware {
     public void setIndexEntity(IndexEntity indexEntity) {
         this.indexEntity = indexEntity;
     }
-
+  
     public long getId() {
         return id;
     }
