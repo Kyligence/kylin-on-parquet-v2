@@ -70,4 +70,8 @@ public abstract class SpanningTree implements Serializable {
                     ", children:{" + children.toString() + "}";//
         }
     }
+
+    abstract public LayoutEntity getCuboidLayout(long cuboidLayoutId);
+
+    abstract public Collection<IndexEntity> getRootIndexEntities();
 }

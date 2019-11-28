@@ -48,6 +48,14 @@ public class Cube extends RootPersistentEntity {
 
     private DataModel dataModel;
 
+    private List<IndexEntity> indexEntities = new ArrayList<>();
+
+    private List<DimensionDesc> dimensions = new ArrayList<>();
+
+    private List<MeasureDesc> measures = new ArrayList<>();
+
+    private transient SpanningTree spanningTree = null; // transient, because can self recreate
+
     private Cube(KylinConfig config) {
         String resourceRootPath = "/" + project + CUBE_RESOURCE_ROOT;
         Preconditions.checkArgument(resourceRootPath.equals("") || resourceRootPath.startsWith("/"));
@@ -72,12 +80,22 @@ public class Cube extends RootPersistentEntity {
     public void setDataModel(DataModel dataModel) {
         this.dataModel = dataModel;
     }
-  
-    private List<IndexEntity> IndexEntities = new ArrayList<>();
 
-    private List<DimensionDesc> dimensions = new ArrayList<>();
+    public SpanningTree getSpanningTree() {
+        if (spanningTree != null)
+            return spanningTree;
 
-    private List<MeasureDesc> measures = new ArrayList<>();
+        synchronized (this) {
+            if (spanningTree == null) {
+                spanningTree = SpanningTreeFactory.fromCube(this);
+            }
+            return spanningTree;
+        }
+    }
+
+    public void setSpanningTree(SpanningTree spanningTree) {
+        this.spanningTree = spanningTree;
+    }
 
     public String getUuid() {
         return uuid;
@@ -117,11 +135,11 @@ public class Cube extends RootPersistentEntity {
     }
 
     public List<IndexEntity> getIndexEntities() {
-        return IndexEntities;
+        return indexEntities;
     }
 
     public void setIndexEntities(List<IndexEntity> indexEntities) {
-        this.IndexEntities = indexEntities;
+        this.indexEntities = indexEntities;
     }
 
     public void addIndexEntities(List<IndexEntity> indexEntities) {
@@ -151,6 +169,8 @@ public class Cube extends RootPersistentEntity {
         this.project = project;
     }
 
-
+    public LayoutEntity getCuboidLayout(Long cuboidLayoutId) {
+        return getSpanningTree().getCuboidLayout(cuboidLayoutId);
+    }
 
 }

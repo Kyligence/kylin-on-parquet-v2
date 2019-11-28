@@ -2290,12 +2290,12 @@ public abstract class KylinConfigBase implements Serializable {
     // ============================================================================
 
     public String getSparkBuildClassName() {
-        return getOptional("kylin.engine.spark.build-class-name", "io.kyligence.kap.engine.spark.job.DFBuildJob");
+        return getOptional("kylin.engine.spark.build-class-name", "org.apache.kylin.engine.spark.job.DFBuildJob");
     }
 
     public String getSparkTableSamplingClassName() {
         return getOptional("kylin.engine.spark.sampling-class-name",
-                "io.kyligence.kap.engine.spark.stats.analyzer.TableAnalyzerJob");
+                "org.apache.kylin.engine.spark.stats.analyzer.TableAnalyzerJob");
     }
 
     public StorageURL getJobTmpMetaStoreUrl(String project, String jobId) {
@@ -2321,6 +2321,10 @@ public abstract class KylinConfigBase implements Serializable {
 
     public String getJobTmpDir(String project) {
         return getHdfsWorkingDirectory(project) + "/job_tmp/";
+    }
+
+    public int getPersistFlatTableThreshold() {
+        return Integer.parseInt(getOptional("kylin.engine.persist-flattable-threshold", "1"));
     }
 
 }
