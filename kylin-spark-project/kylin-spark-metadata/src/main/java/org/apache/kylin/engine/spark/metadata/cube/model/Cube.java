@@ -18,17 +18,21 @@
 
 package org.apache.kylin.engine.spark.metadata.cube.model;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.base.Preconditions;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.KylinConfigExt;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
 import org.apache.kylin.common.util.JsonUtil;
 import org.apache.kylin.metadata.MetadataConstants;
 import org.apache.kylin.metadata.model.Segments;
+import org.apache.kylin.metadata.model.TableRef;
+import org.apache.kylin.engine.spark.metadata.cube.PathManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,10 +41,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.apache.kylin.metadata.MetadataConstants.FILE_SURFIX;
+import static org.apache.kylin.common.persistence.ResourceStore.CUBE_RESOURCE_ROOT;
 
+@SuppressWarnings("serial")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Cube extends RootPersistentEntity {
-    public static final String CUBE_RESOURCE_ROOT = "/cube";
 
     @JsonIgnore
     private KylinConfig config;
@@ -91,6 +96,22 @@ public class Cube extends RootPersistentEntity {
 
     public void setDataModel(DataModel dataModel) {
         this.dataModel = dataModel;
+    }
+
+    public SpanningTree getSpanningTree() {
+        if (spanningTree != null)
+            return spanningTree;
+
+        synchronized (this) {
+            if (spanningTree == null) {
+                spanningTree = SpanningTreeFactory.fromCube(this);
+            }
+            return spanningTree;
+        }
+    }
+
+    public void setSpanningTree(SpanningTree spanningTree) {
+        this.spanningTree = spanningTree;
     }
 
     public String getUuid() {
@@ -170,21 +191,15 @@ public class Cube extends RootPersistentEntity {
     public Set<String> collectPrecalculationResource() {
         Set<String> r = new LinkedHashSet<>();
 
-        // dataflow & segments
-        r.add(this.getResourcePath());
-        /*for (NDataSegment seg : segments) {
-            r.add(seg.getSegDetails().getResourcePath());
-        }*/
-
-        // cubing plan
-        //r.add(getIndexPlan().getResourcePath());
+        // cube & segments
+        r.add(PathManager.getCubePath(project, getId()));
 
         // project & model & tables
-        /*r.add(getModel().getProjectInstance().getResourcePath());
-        r.add(getModel().getResourcePath());
-        for (TableRef t : getModel().getAllTables()) {
+        r.add(PathManager.getProjectPath(project));
+        r.add(PathManager.getModelPath(project, getId()));
+        for (TableRef t : getDataModel().getAllTableRefs()) {
             r.add(t.getTableDesc().getResourcePath());
-        }*/
+        }
 
         return r;
     }
@@ -202,11 +217,11 @@ public class Cube extends RootPersistentEntity {
     }
 
     public List<IndexEntity> getIndexEntities() {
-        return IndexEntities;
+        return indexEntities;
     }
 
     public void setIndexEntities(List<IndexEntity> indexEntities) {
-        this.IndexEntities = indexEntities;
+        this.indexEntities = indexEntities;
     }
 
     public void addIndexEntities(List<IndexEntity> indexEntities) {
@@ -234,5 +249,9 @@ public class Cube extends RootPersistentEntity {
 
     public void setProject(String project) {
         this.project = project;
+    }
+
+    public LayoutEntity getCuboidLayout(Long cuboidLayoutId) {
+        return getSpanningTree().getCuboidLayout(cuboidLayoutId);
     }
 }

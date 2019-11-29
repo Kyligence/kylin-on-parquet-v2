@@ -35,6 +35,7 @@ public class SpanningTreeFactory {
         return newInstance(cube.getConfig(), descLayouts, cube.getUuid());
     }
 
+    //TODO: SomKapConfig
     public static SpanningTree fromLayouts(Collection<LayoutEntity> layoutEntities, String cacheKey) {
         Map<IndexEntity, Collection<LayoutEntity>> descLayouts = getIndexEntity2Layouts(layoutEntities);
         return fromIndexes(descLayouts, cacheKey);
@@ -45,7 +46,7 @@ public class SpanningTreeFactory {
     }
 
     private static SpanningTree newInstance(KylinConfig kylinConfig, Map<IndexEntity, Collection<LayoutEntity>> cuboids,
-            String cacheKey) {
+                                            String cacheKey) {
         try {
             String clzName = kylinConfig.getCuboidSpanningTree();
             Class<? extends SpanningTree> clz = ClassUtil.forName(clzName, SpanningTree.class);

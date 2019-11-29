@@ -2295,19 +2295,24 @@ public abstract class KylinConfigBase implements Serializable {
 
     //TODO: Class name needs to be change
     public String getSparkBuildClassName() {
-        return getOptional("kylin.engine.spark.build-class-name", "io.kyligence.kap.engine.spark.job.DFBuildJob");
+        return getOptional("kylin.engine.spark.build-class-name", "org.apache.kylin.engine.spark.job.DFBuildJob");
     }
 
     //TODO: Class name needs to be change
     public String getSparkTableSamplingClassName() {
         return getOptional("kylin.engine.spark.sampling-class-name",
-                "io.kyligence.kap.engine.spark.stats.analyzer.TableAnalyzerJob");
+                "org.apache.kylin.engine.spark.stats.analyzer.TableAnalyzerJob");
     }
 
     public StorageURL getJobTmpMetaStoreUrl(String project, String jobId) {
         Map<String, String> params = new HashMap<>();
         params.put("path", getJobTmpDir(project) + getNestedPath(jobId) + "meta");
         return new StorageURL(getMetadataUrlPrefix(), HDFSResourceStore.HDFS_SCHEME, params);
+    }
+
+    public Path getJobTmpShareDir(String project, String jobId) {
+        String path = getJobTmpDir(project) + jobId + "/share/";
+        return new Path(path);
     }
 
     // a_b => a/b/
@@ -2322,6 +2327,10 @@ public abstract class KylinConfigBase implements Serializable {
 
     public String getJobTmpDir(String project) {
         return getHdfsWorkingDirectory(project) + "/job_tmp/";
+    }
+
+    public int getPersistFlatTableThreshold() {
+        return Integer.parseInt(getOptional("kylin.engine.persist-flattable-threshold", "1"));
     }
 
 }
