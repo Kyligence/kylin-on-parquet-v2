@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.apache.kylin.common.persistence.ResourceStore.CUBE_RESOURCE_ROOT;
+import static org.apache.kylin.metadata.MetadataConstants.FILE_SURFIX;
 
 @SuppressWarnings("serial")
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -65,7 +66,7 @@ public class Cube extends RootPersistentEntity {
     private transient SpanningTree spanningTree = null; // transient, because can self recreate
 
     @JsonProperty("indexes")
-    private List<IndexEntity> IndexEntities = new ArrayList<>();
+    private List<IndexEntity> indexEntities = new ArrayList<>();
 
     private List<DimensionDesc> dimensions = new ArrayList<>();
 
@@ -126,18 +127,6 @@ public class Cube extends RootPersistentEntity {
         return uuid;
     }
 
-    public SpanningTree getSpanningTree() {
-        if (spanningTree != null)
-            return spanningTree;
-
-        synchronized (this) {
-            if (spanningTree == null) {
-                spanningTree = SpanningTreeFactory.fromCube(this);
-            }
-            return spanningTree;
-        }
-    }
-
     //used to dump resource before spark job submit
     public String getResourcePath() {
         return concatResourcePath(getUuid(), project);
@@ -151,7 +140,7 @@ public class Cube extends RootPersistentEntity {
         Map<Long, Integer> retSubscriptMap = Maps.newHashMap();
         List<IndexEntity> mergedIndexes = Lists.newArrayList();
         int retSubscript = 0;
-        for (IndexEntity indexEntity : IndexEntities) {
+        for (IndexEntity indexEntity : indexEntities) {
             IndexEntity copy = JsonUtil.deepCopyQuietly(indexEntity, IndexEntity.class);
             retSubscriptMap.put(indexEntity.getId(), retSubscript);
             mergedIndexes.add(copy);
@@ -225,7 +214,7 @@ public class Cube extends RootPersistentEntity {
     }
 
     public void addIndexEntities(List<IndexEntity> indexEntities) {
-        this.IndexEntities.addAll(indexEntities);
+        this.indexEntities.addAll(indexEntities);
     }
 
     public List<DimensionDesc> getDimensions() {
@@ -249,9 +238,5 @@ public class Cube extends RootPersistentEntity {
 
     public void setProject(String project) {
         this.project = project;
-    }
-
-    public LayoutEntity getCuboidLayout(Long cuboidLayoutId) {
-        return getSpanningTree().getCuboidLayout(cuboidLayoutId);
     }
 }
