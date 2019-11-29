@@ -20,6 +20,7 @@ package org.apache.kylin.engine.spark.metadata.cube.model;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.util.ClassUtil;
 
 import java.util.Collection;
@@ -27,6 +28,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class SpanningTreeFactory {
+
+    public static SpanningTree fromCube(Cube cube) {
+        Map<IndexEntity, Collection<LayoutEntity>> descLayouts = Maps.newHashMap();
+        for (IndexEntity indexEntity : cube.getIndexEntities()) {
+            descLayouts.put(indexEntity, indexEntity.getLayouts());
+        }
+        return newInstance(cube.getConfig(), descLayouts, cube.getUuid());
+    }
     //TODO: KapConfig
     public static SpanningTree fromLayouts(Collection<LayoutEntity> layoutEntities, String cacheKey) {
         Map<IndexEntity, Collection<LayoutEntity>> descLayouts = getIndexEntity2Layouts(layoutEntities);
@@ -34,13 +43,13 @@ public class SpanningTreeFactory {
     }
 
     private static SpanningTree fromIndexes(Map<IndexEntity, Collection<LayoutEntity>> cuboids, String cacheKey) {
-        return newInstance(KapConfig.getInstanceFromEnv(), cuboids, cacheKey);
+        return newInstance(KylinConfig.getInstanceFromEnv(), cuboids, cacheKey);
     }
 
-    private static SpanningTree newInstance(KapConfig kapConfig, Map<IndexEntity, Collection<LayoutEntity>> cuboids,
-            String cacheKey) {
+    private static SpanningTree newInstance(KylinConfig kylinConfig, Map<IndexEntity, Collection<LayoutEntity>> cuboids,
+                                            String cacheKey) {
         try {
-            String clzName = kapConfig.getCuboidSpanningTree();
+            String clzName = kylinConfig.getCuboidSpanningTree();
             Class<? extends SpanningTree> clz = ClassUtil.forName(clzName, SpanningTree.class);
             return clz.getConstructor(Map.class, String.class).newInstance(cuboids, cacheKey);
         } catch (Exception e) {

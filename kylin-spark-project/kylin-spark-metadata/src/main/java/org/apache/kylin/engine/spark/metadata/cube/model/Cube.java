@@ -18,12 +18,15 @@
 
 package org.apache.kylin.engine.spark.metadata.cube.model;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.KylinConfigExt;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
-import org.apache.kylin.metadata.MetadataConstants;
+import org.apache.kylin.engine.spark.metadata.cube.PathManager;
+import org.apache.kylin.metadata.model.TableRef;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,10 +34,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.apache.kylin.metadata.MetadataConstants.FILE_SURFIX;
+import static org.apache.kylin.common.persistence.ResourceStore.CUBE_RESOURCE_ROOT;
 
+@SuppressWarnings("serial")
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Cube extends RootPersistentEntity {
-    public static final String CUBE_RESOURCE_ROOT = "/cube";
 
     @JsonIgnore
     private KylinConfig config;
@@ -44,7 +48,19 @@ public class Cube extends RootPersistentEntity {
 
     private DataModel dataModel;
 
-    private Cube(KylinConfig config) {}
+    private List<IndexEntity> indexEntities = new ArrayList<>();
+
+    private List<DimensionDesc> dimensions = new ArrayList<>();
+
+    private List<MeasureDesc> measures = new ArrayList<>();
+
+    private transient SpanningTree spanningTree = null; // transient, because can self recreate
+
+    private Cube(KylinConfig config) {
+        String resourceRootPath = "/" + project + CUBE_RESOURCE_ROOT;
+        Preconditions.checkArgument(resourceRootPath.equals("") || resourceRootPath.startsWith("/"));
+        Preconditions.checkArgument(!resourceRootPath.endsWith("/"));
+    }
 
     public static Cube getInstance(KylinConfig config) {
         return new Cube(config);
@@ -64,12 +80,22 @@ public class Cube extends RootPersistentEntity {
     public void setDataModel(DataModel dataModel) {
         this.dataModel = dataModel;
     }
-  
-    private List<IndexEntity> IndexEntities = new ArrayList<>();
 
-    private List<DimensionDesc> dimensions = new ArrayList<>();
+    public SpanningTree getSpanningTree() {
+        if (spanningTree != null)
+            return spanningTree;
 
-    private List<MeasureDesc> measures = new ArrayList<>();
+        synchronized (this) {
+            if (spanningTree == null) {
+                spanningTree = SpanningTreeFactory.fromCube(this);
+            }
+            return spanningTree;
+        }
+    }
+
+    public void setSpanningTree(SpanningTree spanningTree) {
+        this.spanningTree = spanningTree;
+    }
 
     public String getUuid() {
         return uuid;
@@ -84,32 +110,18 @@ public class Cube extends RootPersistentEntity {
     }
 
     //used to dump resource before spark job submit
-    public String getResourcePath() {
-        return concatResourcePath(getUuid(), project);
-    }
-
-    public static String concatResourcePath(String name, String project) {
-        return "/" + project + CUBE_RESOURCE_ROOT + "/" + name + FILE_SURFIX;
-    }
-
     public Set<String> collectPrecalculationResource() {
         Set<String> r = new LinkedHashSet<>();
 
-        // dataflow & segments
-        r.add(this.getResourcePath());
-        /*for (NDataSegment seg : segments) {
-            r.add(seg.getSegDetails().getResourcePath());
-        }*/
-
-        // cubing plan
-        //r.add(getIndexPlan().getResourcePath());
+        // cube & segments
+        r.add(PathManager.getCubePath(project, getId()));
 
         // project & model & tables
-        /*r.add(getModel().getProjectInstance().getResourcePath());
-        r.add(getModel().getResourcePath());
-        for (TableRef t : getModel().getAllTables()) {
+        r.add(PathManager.getProjectPath(project));
+        r.add(PathManager.getModelPath(project, getId()));
+        for (TableRef t : getDataModel().getAllTableRefs()) {
             r.add(t.getTableDesc().getResourcePath());
-        }*/
+        }
 
         return r;
     }
@@ -123,15 +135,11 @@ public class Cube extends RootPersistentEntity {
     }
 
     public List<IndexEntity> getIndexEntities() {
-        return IndexEntities;
+        return indexEntities;
     }
 
     public void setIndexEntities(List<IndexEntity> indexEntities) {
-        this.IndexEntities = indexEntities;
-    }
-
-    public void addIndexEntities(List<IndexEntity> indexes) {
-        this.IndexEntities.addAll(indexes);
+        this.indexEntities = indexEntities;
     }
 
     public void addIndexEntities(List<IndexEntity> indexEntities) {
@@ -161,6 +169,8 @@ public class Cube extends RootPersistentEntity {
         this.project = project;
     }
 
-
+    public LayoutEntity getCuboidLayout(Long cuboidLayoutId) {
+        return getSpanningTree().getCuboidLayout(cuboidLayoutId);
+    }
 
 }
