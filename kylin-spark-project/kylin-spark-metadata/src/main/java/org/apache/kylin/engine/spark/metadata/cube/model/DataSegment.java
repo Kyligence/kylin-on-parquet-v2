@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.metadata.model.DataModelDesc;
-import org.apache.kylin.metadata.model.SegmentRange;
 import org.apache.kylin.metadata.model.ISegment;
 import org.apache.kylin.metadata.model.SegmentStatusEnum;
 
@@ -59,6 +58,18 @@ public class DataSegment implements Serializable {
 
     public DataModel getModel() {
         return this.cube.getDataModel();
+    }
+
+    public boolean isOffsetCube() {
+        return segmentRange instanceof SegmentRange.KafkaOffsetPartitionedSegmentRange;
+    }
+
+    public void setSegmentRange(SegmentRange segmentRange) {
+        this.segmentRange = segmentRange;
+    }
+
+    public SegmentRange getSegRange() {
+        return segmentRange;
     }
 
     public Cube getCube() {
