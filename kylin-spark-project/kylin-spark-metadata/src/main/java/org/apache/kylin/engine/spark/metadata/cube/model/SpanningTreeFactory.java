@@ -35,7 +35,7 @@ public class SpanningTreeFactory {
         return newInstance(cube.getConfig(), descLayouts, cube.getUuid());
     }
 
-    //TODO: SomKapConfig
+    //TODO[xyxy]: For now using KylinConfig to substitute KapConfig
     public static SpanningTree fromLayouts(Collection<LayoutEntity> layoutEntities, String cacheKey) {
         Map<IndexEntity, Collection<LayoutEntity>> descLayouts = getIndexEntity2Layouts(layoutEntities);
         return fromIndexes(descLayouts, cacheKey);
