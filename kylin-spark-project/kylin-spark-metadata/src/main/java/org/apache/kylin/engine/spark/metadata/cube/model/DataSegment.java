@@ -51,14 +51,15 @@ public class DataSegment implements Serializable {
     @JsonProperty("last_build_time")
     private long lastBuildTime; // last segment incr build job
 
-    @JsonProperty("start")
-    private long start;
-
-    @JsonProperty("end")
-    private long end;
+    @JsonProperty("segRange")
+    private SegmentRange segmentRange;
 
     private transient DataSegDetails segDetails; // transient, not required by spark cubing
     private transient Map<Long, DataLayout> layoutsMap = Collections.emptyMap(); // transient, not required by spark cubing
+
+    public DataModel getModel() {
+        return this.cube.getDataModel();
+    }
 
     public Cube getCube() {
         return cube;
@@ -98,22 +99,6 @@ public class DataSegment implements Serializable {
 
     public void setLastBuildTime(long lastBuildTime) {
         this.lastBuildTime = lastBuildTime;
-    }
-
-    public long getStart() {
-        return start;
-    }
-
-    public void setStart(long start) {
-        this.start = start;
-    }
-
-    public long getEnd() {
-        return end;
-    }
-
-    public void setEnd(long end) {
-        this.end = end;
     }
 
     public DataSegDetails getSegDetails() {
