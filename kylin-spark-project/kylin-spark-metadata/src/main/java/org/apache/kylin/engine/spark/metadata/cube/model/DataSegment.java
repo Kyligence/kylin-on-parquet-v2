@@ -50,8 +50,13 @@ public class DataSegment implements Serializable {
     @JsonProperty("last_build_time")
     private long lastBuildTime; // last segment incr build job
 
-    @JsonProperty("segRange")
-    private SegmentRange segmentRange;
+//    @JsonProperty("segRange")
+//    private SegmentRange segmentRange;
+    @JsonProperty("start")
+    private long start;
+
+    @JsonProperty("end")
+    private long end;
 
     private transient DataSegDetails segDetails; // transient, not required by spark cubing
     private transient Map<Long, DataLayout> layoutsMap = Collections.emptyMap(); // transient, not required by spark cubing
@@ -60,17 +65,17 @@ public class DataSegment implements Serializable {
         return this.cube.getDataModel();
     }
 
-    public boolean isOffsetCube() {
-        return segmentRange instanceof SegmentRange.KafkaOffsetPartitionedSegmentRange;
-    }
-
-    public void setSegmentRange(SegmentRange segmentRange) {
-        this.segmentRange = segmentRange;
-    }
-
-    public SegmentRange getSegRange() {
-        return segmentRange;
-    }
+//    public boolean isOffsetCube() {
+//        return segmentRange instanceof SegmentRange.KafkaOffsetPartitionedSegmentRange;
+//    }
+//
+//    public void setSegmentRange(SegmentRange segmentRange) {
+//        this.segmentRange = segmentRange;
+//    }
+//
+//    public SegmentRange getSegRange() {
+//        return segmentRange;
+//    }
 
     public Cube getCube() {
         return cube;
@@ -110,6 +115,30 @@ public class DataSegment implements Serializable {
 
     public void setLastBuildTime(long lastBuildTime) {
         this.lastBuildTime = lastBuildTime;
+    }
+
+    public long getStart() {
+        return start;
+    }
+
+    public void setStart(long start) {
+        this.start = start;
+    }
+
+    public long getEnd() {
+        return end;
+    }
+
+    public void setEnd(long end) {
+        this.end = end;
+    }
+
+    public Map<Long, DataLayout> getLayoutsMap() {
+        return layoutsMap;
+    }
+
+    public void setLayoutsMap(Map<Long, DataLayout> layoutsMap) {
+        this.layoutsMap = layoutsMap;
     }
 
     public DataSegDetails getSegDetails() {
