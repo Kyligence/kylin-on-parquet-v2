@@ -20,8 +20,10 @@ package org.apache.kylin.engine.spark.metadata.cube.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Lists;
 import org.apache.kylin.metadata.model.IStorageAware;
+import org.apache.kylin.metadata.model.TblColRef;
 
 import java.util.List;
 
@@ -47,8 +49,48 @@ public class LayoutEntity implements IStorageAware {
     @JsonProperty("storage_type")
     private int storageType = IStorageAware.ID_PARQUET;
 
-//    private ImmutableBiMap<Integer, TblColRef> orderedDimensions;
-//    private ImmutableBiMap<Integer, Measure> orderedMeasures;
+    private ImmutableBiMap<Integer, TblColRef> orderedDimensions;
+    private ImmutableBiMap<Integer, MeasureDesc> orderedMeasures;
+
+    public ImmutableBiMap<Integer, TblColRef> getOrderedDimensions() { // dimension order abides by rowkey_col_desc
+        if (orderedDimensions != null)
+            return orderedDimensions;
+
+        synchronized (this) {
+            if (orderedDimensions != null)
+                return orderedDimensions;
+
+            ImmutableBiMap.Builder<Integer, TblColRef> dimsBuilder = ImmutableBiMap.builder();
+
+            for (int colId : colOrder) {
+                if (colId < DataModel.MEASURE_ID_BASE)
+                    dimsBuilder.put(colId, indexEntity.getEffectiveDimCols().get(colId));
+            }
+
+            orderedDimensions = dimsBuilder.build();
+            return orderedDimensions;
+        }
+    }
+
+    public ImmutableBiMap<Integer, MeasureDesc> getOrderedMeasures() { // measure order abides by column family
+        if (orderedMeasures != null)
+            return orderedMeasures;
+
+        synchronized (this) {
+            if (orderedMeasures != null)
+                return orderedMeasures;
+
+            ImmutableBiMap.Builder<Integer, MeasureDesc> measureBuilder = ImmutableBiMap.builder();
+
+            for (int colId : colOrder) {
+                if (colId >= DataModel.MEASURE_ID_BASE)
+                    measureBuilder.put(colId, indexEntity.getEffectiveMeasures().get(colId));
+            }
+
+            orderedMeasures = measureBuilder.build();
+            return orderedMeasures;
+        }
+    }
 
     @Override
     public int getStorageType() {

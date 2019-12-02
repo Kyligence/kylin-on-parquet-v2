@@ -39,6 +39,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class DataModel extends RootPersistentEntity {
+    public static final int MEASURE_ID_BASE = 100000;
+
     public enum TableKind implements Serializable {
         FACT, LOOKUP
     }
@@ -85,6 +87,10 @@ public class DataModel extends RootPersistentEntity {
     @JsonProperty("capacity")
     private RealizationCapacity capacity = RealizationCapacity.MEDIUM;
 
+    private ImmutableBiMap<Integer, TblColRef> effectiveCols; // excluding DELETED cols
+
+    private ImmutableBiMap<Integer, TblColRef> effectiveDimensions; // including DIMENSION cols
+
     private ImmutableBiMap<Integer, MeasureDesc> effectiveMeasures; // excluding DELETED cols
 
     // computed attributes
@@ -95,6 +101,17 @@ public class DataModel extends RootPersistentEntity {
     private Map<String, TableRef> aliasMap = Maps.newHashMap(); // alias => TableRef, a table has exactly one alias
     private Map<String, TableRef> tableNameMap = Maps.newHashMap(); // name => TableRef, a table maybe referenced by multiple names
     private JoinsTree joinsTree;
+
+    /**
+     * returns ID <==> TblColRef
+     */
+    public ImmutableBiMap<Integer, TblColRef> getEffectiveColsMap() {
+        return effectiveCols;
+    }
+
+    public ImmutableBiMap<Integer, TblColRef> getEffectiveDimenionsMap() {
+        return effectiveDimensions;
+    }
 
     /**
      * returns ID <==> Measure
@@ -318,7 +335,7 @@ public class DataModel extends RootPersistentEntity {
             if (lookup.getTableIdentity().equals(tableIdentity))
                 return lookup;
         }
-        throw new IllegalArgumentException("Table not found by " + tableIdentity + " in model " + name);
+        throw new IllegalArgumentException("Table not found by " + tableIdentity + " in model " + uuid);
     }
 
     @Override

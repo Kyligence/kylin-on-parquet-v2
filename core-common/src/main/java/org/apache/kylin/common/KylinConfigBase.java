@@ -2304,6 +2304,14 @@ public abstract class KylinConfigBase implements Serializable {
                 "org.apache.kylin.engine.spark.stats.analyzer.TableAnalyzerJob");
     }
 
+    public Boolean getSparkEngineTaskImpactInstanceEnabled() {
+        return Boolean.parseBoolean(getOptional("kylin.engine.spark.task-impact-instance-enabled", "true"));
+    }
+
+    public int getSparkEngineTaskCoreFactor() {
+        return Integer.parseInt(getOptional("kylin.engine.spark.task-core-factor", "3"));
+    }
+
     public StorageURL getJobTmpMetaStoreUrl(String project, String jobId) {
         Map<String, String> params = new HashMap<>();
         params.put("path", getJobTmpDir(project) + getNestedPath(jobId) + "meta");
