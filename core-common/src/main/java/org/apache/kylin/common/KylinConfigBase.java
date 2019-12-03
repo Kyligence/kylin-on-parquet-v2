@@ -145,7 +145,6 @@ public abstract class KylinConfigBase implements Serializable {
     }
 
     /**
-     *
      * @param propertyKeys the collection of the properties; if null will return all properties
      * @return properties which contained in propertyKeys
      */
@@ -449,7 +448,7 @@ public abstract class KylinConfigBase implements Serializable {
 
     public String[] getRealizationProviders() {
         return getOptionalStringArray("kylin.metadata.realization-providers", //
-                new String[] { "org.apache.kylin.cube.CubeManager", "org.apache.kylin.storage.hybrid.HybridManager" });
+                new String[]{"org.apache.kylin.cube.CubeManager", "org.apache.kylin.storage.hybrid.HybridManager"});
     }
 
     public String[] getCubeDimensionCustomEncodingFactories() {
@@ -559,8 +558,8 @@ public abstract class KylinConfigBase implements Serializable {
     // ============================================================================
 
     /**
-     * @return  if mr-hive dict not enabled, return empty array;
-     *          else return array contains "{TABLE_NAME}_{COLUMN_NAME}"
+     * @return if mr-hive dict not enabled, return empty array;
+     * else return array contains "{TABLE_NAME}_{COLUMN_NAME}"
      */
     public String[] getMrHiveDictColumns() {
         String columnStr = getOptional("kylin.dictionary.mr-hive.columns", "");
@@ -1461,7 +1460,7 @@ public abstract class KylinConfigBase implements Serializable {
         return Boolean.parseBoolean(getOptional("kylin.engine.spark-fact-distinct", "false"));
     }
 
-    public boolean isSparkCardinalityEnabled(){
+    public boolean isSparkCardinalityEnabled() {
         return Boolean.parseBoolean(getOptional("kylin.engine.spark-cardinality", "false"));
     }
 
@@ -1758,7 +1757,7 @@ public abstract class KylinConfigBase implements Serializable {
 
     public String[] getPushDownConverterClassNames() {
         return getOptionalStringArray("kylin.query.pushdown.converter-class-names",
-                new String[] { "org.apache.kylin.source.adhocquery.HivePushDownConverter" });
+                new String[]{"org.apache.kylin.source.adhocquery.HivePushDownConverter"});
     }
 
     public boolean isPushdownQueryCacheEnabled() {
@@ -1863,7 +1862,7 @@ public abstract class KylinConfigBase implements Serializable {
     }
 
     public int[] getQueryMetricsPercentilesIntervals() {
-        String[] dft = { "60", "300", "3600" };
+        String[] dft = {"60", "300", "3600"};
         return getOptionalIntArray("kylin.server.query-metrics-percentiles-intervals", dft);
     }
 
@@ -2293,12 +2292,10 @@ public abstract class KylinConfigBase implements Serializable {
                 "kylin.engine.spark.metadata.cube.model.ForestSpanningTree");
     }
 
-    //TODO: Class name needs to be change
     public String getSparkBuildClassName() {
         return getOptional("kylin.engine.spark.build-class-name", "org.apache.kylin.engine.spark.job.DFBuildJob");
     }
 
-    //TODO: Class name needs to be change
     public String getSparkTableSamplingClassName() {
         return getOptional("kylin.engine.spark.sampling-class-name",
                 "org.apache.kylin.engine.spark.stats.analyzer.TableAnalyzerJob");

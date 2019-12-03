@@ -169,21 +169,6 @@ public class IndexEntity {
         return measureBitset;
     }
 
-    private final BiMap<Integer, TblColRef> effectiveDimCols = initEffectiveDimCols();
-
-    public BiMap<Integer, TblColRef> getEffectiveDimCols() {
-        return effectiveDimCols;
-    }
-
-    private BiMap<Integer, TblColRef> initEffectiveDimCols() {
-        return Maps.filterKeys(getModel().getEffectiveColsMap(),
-                input -> input != null && getDimensionBitset().get(input));
-    }
-
-    public DataModel getModel() {
-        return cube.getDataModel();
-    }
-
     public boolean isTableIndex() {
         return id >= TABLE_INDEX_START_ID;
     }
