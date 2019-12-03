@@ -21,10 +21,6 @@ package org.apache.kylin.engine.spark.metadata.cube.model;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.kylin.common.KylinConfig;
-import org.apache.kylin.metadata.model.DataModelDesc;
-import org.apache.kylin.metadata.model.ISegment;
-import org.apache.kylin.metadata.model.SegmentStatusEnum;
 
 import java.io.Serializable;
 import java.util.Collections;

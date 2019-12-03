@@ -20,6 +20,7 @@ package org.apache.kylin.engine.spark.metadata.cube;
 
 import org.apache.kylin.cube.CubeInstance;
 import org.apache.kylin.cube.CubeUpdate;
+import org.apache.kylin.cube.model.CubeDesc;
 import org.apache.kylin.engine.spark.metadata.cube.model.Cube;
 import org.apache.kylin.engine.spark.metadata.cube.model.CubeUpdate2;
 
@@ -39,5 +40,9 @@ public class MetadataConverter {
     public static CubeUpdate convertCubeUpdate(CubeUpdate2 cubeUpdate) {
         //TODO[xyxy]: add realization later
         return null;
+    }
+
+    public static CubeDesc getCubeDesc(Cube cube) {
+        return new CubeDesc();
     }
 }
