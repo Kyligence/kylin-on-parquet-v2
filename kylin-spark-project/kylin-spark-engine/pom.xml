@@ -131,6 +131,11 @@
             <version>4.1.0</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.kylin</groupId>
+            <artifactId>kylin-core-storage</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

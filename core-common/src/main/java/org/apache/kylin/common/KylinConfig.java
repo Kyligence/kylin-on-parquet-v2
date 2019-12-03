@@ -581,12 +581,4 @@ public class KylinConfig extends KylinConfigBase {
         else
             return this.base() == ((KylinConfig) another).base();
     }
-
-    //kylin parquetv2
-
-    public String getCuboidSpanningTree() {
-        return this.getOptional("kap.cube.cuboid-spanning-tree",
-                "io.kyligence.kap.metadata.cube.cuboid.NForestSpanningTree");
-    }
-
 }

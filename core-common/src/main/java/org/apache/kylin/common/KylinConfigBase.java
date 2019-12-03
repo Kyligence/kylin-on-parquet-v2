@@ -2365,4 +2365,49 @@ public abstract class KylinConfigBase implements Serializable {
         return Integer.parseInt(getOptional("kylin.snapshot.parallel-build-timeout-seconds", "3600"));
     }
 
+    //https://github.com/Kyligence/KAP/issues/12865
+    public String getStorageProvider() {
+        return getOptional("kylin.storage.provider", "org.apache.kylin.common.storage.DefaultStorageProvider");
+    }
+
+    /**
+     * parquet shard size, in MB
+     */
+    public int getParquetStorageShardSizeMB() {
+        return Integer.valueOf(getOptional("kylin.storage.columnar.shard-size-mb", "128"));
+    }
+
+    public long getParquetStorageShardSizeRowCount() {
+        return Long.valueOf(getOptional("kylin.storage.columnar.shard-rowcount", "2500000"));
+    }
+
+    public long getParquetStorageCountDistinctShardSizeRowCount() {
+        return Long.valueOf(getOptional("kylin.storage.columnar.shard-countdistinct-rowcount", "1000000"));
+    }
+
+    public int getParquetStorageRepartitionThresholdSize() {
+        return Integer.valueOf(getOptional("kylin.storage.columnar.repartition-threshold-size-mb", "128"));
+    }
+
+    public int getParquetStorageShardMin() {
+        return Integer.valueOf(getOptional("kylin.storage.columnar.shard-min", "1"));
+    }
+
+    public int getParquetStorageShardMax() {
+        return Integer.valueOf(getOptional("kylin.storage.columnar.shard-max", "1000"));
+    }
+
+    public int getParquetStorageBlockSize() {
+        int defaultBlockSize = 5 * getParquetStorageShardSizeMB() * 1024 * 1024; //default (5 * shard_size)
+        return Integer.valueOf(getOptional("kylin.storage.columnar.hdfs-blocksize-bytes",
+                String.valueOf(defaultBlockSize < 0 ? Integer.MAX_VALUE : defaultBlockSize)));
+    }
+
+    public int getParquetSpliceShardExpandFactor() {
+        return Integer.valueOf(getOptional("kylin.storage.columnar.shard-expand-factor", "10"));
+    }
+
+    public int getParquetDfsReplication() {
+        return Integer.valueOf(getOptional("kylin.storage.columnar.dfs-replication", "3"));
+    }
 }
