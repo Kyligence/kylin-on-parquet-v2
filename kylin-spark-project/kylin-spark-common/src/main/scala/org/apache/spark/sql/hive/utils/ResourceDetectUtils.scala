@@ -30,6 +30,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.apache.hadoop.fs._
 import org.apache.kylin.common.util.HadoopUtil
+import org.apache.kylin.engine.spark.metadata.cube.model.LayoutEntity
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.execution.columnar.InMemoryTableScanExec
 import org.apache.spark.sql.execution.{FileSourceScanExec, SparkPlan}
@@ -94,7 +95,9 @@ object ResourceDetectUtils extends Logging {
     paths.map(path => {
       val fs = path.getFileSystem(HadoopUtil.getCurrentConfiguration)
       if (fs.exists(path)) {
-        HadoopUtil.getContentSummary(fs, path).getLength
+        // To do
+        //HadoopUtil.getContentSummary(fs, path).getLength
+        0L
       } else {
         0L
       }

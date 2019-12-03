@@ -20,6 +20,7 @@ package org.apache.kylin.engine.spark.metadata.cube.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -93,6 +94,10 @@ public class DataModel extends RootPersistentEntity {
 
     private ImmutableBiMap<Integer, MeasureDesc> effectiveMeasures; // excluding DELETED cols
 
+    private transient BiMap<Integer, TblColRef> effectiveDimCols; // BiMap impl (com.google.common.collect.Maps$FilteredEntryBiMap) is not serializable
+
+    private ImmutableBiMap<Integer, TblColRef> effectiveCols; // excluding DELETED cols
+
     // computed attributes
     private TableRef rootFactTableRef;
     private Set<TableRef> factTableRefs = Sets.newLinkedHashSet();
@@ -120,12 +125,20 @@ public class DataModel extends RootPersistentEntity {
         return effectiveMeasures;
     }
 
+    public BiMap<Integer, TblColRef> getEffectiveDimCols() {
+        return effectiveDimCols;
+    }
+
     public KylinConfig getConfig() {
         return config;
     }
 
     public void setConfig(KylinConfig config) {
         this.config = config;
+    }
+
+    public TableRef getRootFactTable() {
+        return rootFactTableRef;
     }
 
     public String getAlias() {
@@ -336,6 +349,13 @@ public class DataModel extends RootPersistentEntity {
                 return lookup;
         }
         throw new IllegalArgumentException("Table not found by " + tableIdentity + " in model " + uuid);
+    }
+
+    /**
+     * returns ID <==> TblColRef
+     */
+    public ImmutableBiMap<Integer, TblColRef> getEffectiveColsMap() {
+        return effectiveCols;
     }
 
     @Override
