@@ -96,8 +96,6 @@ public class DataModel extends RootPersistentEntity {
 
     private transient BiMap<Integer, TblColRef> effectiveDimCols; // BiMap impl (com.google.common.collect.Maps$FilteredEntryBiMap) is not serializable
 
-    private ImmutableBiMap<Integer, TblColRef> effectiveCols; // excluding DELETED cols
-
     // computed attributes
     private TableRef rootFactTableRef;
     private Set<TableRef> factTableRefs = Sets.newLinkedHashSet();
@@ -349,13 +347,6 @@ public class DataModel extends RootPersistentEntity {
                 return lookup;
         }
         throw new IllegalArgumentException("Table not found by " + tableIdentity + " in model " + uuid);
-    }
-
-    /**
-     * returns ID <==> TblColRef
-     */
-    public ImmutableBiMap<Integer, TblColRef> getEffectiveColsMap() {
-        return effectiveCols;
     }
 
     @Override
