@@ -55,6 +55,9 @@ public class DataSegment implements Serializable {
     @JsonProperty("segRange")
     private SegmentRange segmentRange;
 
+    @JsonProperty("source_bytes_size")
+    private long sourceBytesSize = -1;
+
     private transient DataSegDetails segDetails; // transient, not required by spark cubing
     private transient Map<Long, DataLayout> layoutsMap = Collections.emptyMap(); // transient, not required by spark cubing
 
@@ -140,5 +143,14 @@ public class DataSegment implements Serializable {
 
     public void setSegDetails(DataSegDetails segDetails) {
         this.segDetails = segDetails;
+    }
+
+    public long getSourceBytesSize() {
+        return sourceBytesSize;
+    }
+
+    public void setSourceBytesSize(long sourceBytesSize) {
+//        checkIsNotCachedAndShared();
+        this.sourceBytesSize = sourceBytesSize;
     }
 }
