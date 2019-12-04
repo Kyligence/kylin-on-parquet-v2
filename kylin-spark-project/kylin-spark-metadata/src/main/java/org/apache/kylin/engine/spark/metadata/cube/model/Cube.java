@@ -191,15 +191,15 @@ public class Cube extends RootPersistentEntity {
     }
 
     public List<IndexEntity> getAllIndexes() {
-        Map<Long, Integer> retSubscriptMap = Maps.newHashMap();
-        List<IndexEntity> mergedIndexes = Lists.newArrayList();
-        int retSubscript = 0;
-        for (IndexEntity indexEntity : indexEntities) {
-            IndexEntity copy = JsonUtil.deepCopyQuietly(indexEntity, IndexEntity.class);
-            retSubscriptMap.put(indexEntity.getId(), retSubscript);
-            mergedIndexes.add(copy);
-            retSubscript++;
-        }
+//        Map<Long, Integer> retSubscriptMap = Maps.newHashMap();
+//        List<IndexEntity> mergedIndexes = Lists.newArrayList();
+//        int retSubscript = 0;
+//        for (IndexEntity indexEntity : indexEntities) {
+//            IndexEntity copy = JsonUtil.deepCopyQuietly(indexEntity, IndexEntity.class);
+//            retSubscriptMap.put(indexEntity.getId(), retSubscript);
+//            mergedIndexes.add(copy);
+//            retSubscript++;
+//        }
 
         //TODO: comment out for now
 //        for (LayoutEntity ruleBasedLayout : ruleBasedLayouts) {
@@ -226,9 +226,9 @@ public class Cube extends RootPersistentEntity {
 //            copyRuleBasedLayout.setIndex(targetIndex);
 //        }
 
-        mergedIndexes.forEach(value -> value.setCube(this));
-        return mergedIndexes;
-
+//        mergedIndexes.forEach(value -> value.setCube(this));
+//        return mergedIndexes;
+        return indexEntities;
     }
 
     public Set<String> collectPrecalculationResource() {
