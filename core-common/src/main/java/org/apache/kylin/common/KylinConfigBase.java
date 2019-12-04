@@ -2432,4 +2432,12 @@ public abstract class KylinConfigBase implements Serializable {
     public boolean isAutoSetSparkConf() {
         return Boolean.parseBoolean(getOptional("kylin.spark-conf.auto.prior", "true"));
     }
+
+    public String getBuildConf() {
+        return getOptional("kylin.engine.submit-hadoop-conf-dir", "");
+    }
+
+    public boolean isJobLogPrintEnabled() {
+        return Boolean.parseBoolean(getOptional("kylin.job.log-print-enabled", "true"));
+    }
 }
