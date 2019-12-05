@@ -81,7 +81,11 @@ public class Cube extends RootPersistentEntity {
     public static Cube getInstance(KylinConfig config) {
         return new Cube(config);
     }
-
+  
+    public static Cube getInstance(KylinConfig config, String uuid) {
+        return new Cube(config);
+    }
+  
     //TODO[xyxy]: if exists another way to init
     private void initDimensionAndMeasures() {
         List<IndexEntity> indexes = getAllIndexes();
@@ -137,6 +141,12 @@ public class Cube extends RootPersistentEntity {
         this.effectiveMeasures = effectiveMeasures;
     }
 
+    public DataSegment appendSegment(SegmentRange segmentRange) {
+        DataSegment segment = new DataSegment(this, segmentRange);
+        segments.add(segment);
+        return segment;
+    }
+  
     public DataModel getModel() {
         return dataModel;
     }
@@ -292,5 +302,9 @@ public class Cube extends RootPersistentEntity {
 
     public void setProject(String project) {
         this.project = project;
+    }
+
+    public List<DataSegment> getSegments() {
+        return segments;
     }
 }
