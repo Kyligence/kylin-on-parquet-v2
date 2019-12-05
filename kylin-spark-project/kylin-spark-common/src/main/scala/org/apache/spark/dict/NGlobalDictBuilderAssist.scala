@@ -27,7 +27,7 @@ package org.apache.spark.dict
 import java.io.IOException
 import java.util
 
-import io.kyligence.kap.metadata.cube.model.NDataSegment
+import org.apache.kylin.engine.spark.metadata.cube.model.DataSegment
 import org.apache.kylin.metadata.model.TblColRef
 import org.apache.spark.TaskContext
 import org.apache.spark.internal.Logging
@@ -41,8 +41,8 @@ import scala.collection.JavaConverters._
 object NGlobalDictBuilderAssist extends Logging {
 
   @throws[IOException]
-  def resize(ref: TblColRef, seg: NDataSegment, bucketPartitionSize: Int, ss: SparkSession): Unit = {
-    val globalDict = new NGlobalDictionaryV2(seg.getProject, ref.getTable, ref.getName, seg.getConfig.getHdfsWorkingDirectory)
+  def resize(ref: TblColRef, seg: DataSegment, bucketPartitionSize: Int, ss: SparkSession): Unit = {
+    val globalDict = new NGlobalDictionaryV2(seg.getProject, ref.getTable, ref.getName, seg.getCube.getConfig.getHdfsWorkingDirectory)
 
     val broadcastDict = ss.sparkContext.broadcast(globalDict)
     globalDict.prepareWrite()
@@ -78,7 +78,7 @@ object NGlobalDictBuilderAssist extends Logging {
       .count()
 
     globalDict.writeMetaDict(bucketPartitionSize,
-      seg.getConfig.getGlobalDictV2MaxVersions, seg.getConfig.getGlobalDictV2VersionTTL)
+      seg.getCube.getConfig.getGlobalDictV2MaxVersions, seg.getCube.getConfig.getGlobalDictV2VersionTTL)
   }
 
 }
