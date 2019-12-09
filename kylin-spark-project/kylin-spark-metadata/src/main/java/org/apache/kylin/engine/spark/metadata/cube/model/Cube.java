@@ -29,6 +29,8 @@ import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.KylinConfigExt;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
 import org.apache.kylin.common.util.JsonUtil;
+import org.apache.kylin.metadata.model.SegmentStatusEnum;
+import org.apache.kylin.metadata.model.Segments;
 import org.apache.kylin.metadata.model.TableRef;
 import org.apache.kylin.engine.spark.metadata.cube.PathManager;
 import org.apache.kylin.metadata.model.TblColRef;
@@ -315,5 +317,16 @@ public class Cube extends RootPersistentEntity {
 
     public List<DataSegment> getSegments() {
         return segments;
+    }
+
+    public List<DataSegment> getSegments(SegmentStatusEnum status) {
+        List<DataSegment> result = new ArrayList<>();
+
+        for (DataSegment segment : segments) {
+            if (segment.getStatus() == status) {
+                result.add(segment);
+            }
+        }
+        return result;
     }
 }
