@@ -70,8 +70,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import io.kyligence.kap.engine.spark.merger.MetadataMerger;
-
 /**
  *
  */
@@ -447,9 +445,5 @@ public class NSparkExecutable extends AbstractExecutable {
 
     public boolean needMergeMetadata() {
         return false;
-    }
-
-    public void mergerMetadata(MetadataMerger merger) {
-        throw new UnsupportedOperationException();
     }
 }
