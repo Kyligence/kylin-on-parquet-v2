@@ -21,6 +21,7 @@ package org.apache.kylin.engine.spark.metadata.cube.model;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.kylin.metadata.model.SegmentStatusEnum;
 import org.apache.kylin.metadata.model.Segments;
 
 import java.io.Serializable;
@@ -58,6 +59,9 @@ public class DataSegment implements Serializable {
 
     @JsonProperty("source_bytes_size")
     private long sourceBytesSize = -1;
+
+    @JsonProperty("status")
+    private SegmentStatusEnum status;
 
     public DataSegment() { }
 
@@ -164,6 +168,14 @@ public class DataSegment implements Serializable {
     public void setSourceBytesSize(long sourceBytesSize) {
 //        checkIsNotCachedAndShared();
         this.sourceBytesSize = sourceBytesSize;
+    }
+
+    public SegmentStatusEnum getStatus() {
+        return status;
+    }
+
+    public void setStatus(SegmentStatusEnum status) {
+        this.status = status;
     }
 
     public String makeSegmentName(SegmentRange segRange) {

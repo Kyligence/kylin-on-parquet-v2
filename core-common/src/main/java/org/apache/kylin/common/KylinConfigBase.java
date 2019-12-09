@@ -2464,4 +2464,9 @@ public abstract class KylinConfigBase implements Serializable {
     public boolean isJobLogPrintEnabled() {
         return Boolean.parseBoolean(getOptional("kylin.job.log-print-enabled", "true"));
     }
+
+    public String getClusterInfoFetcherClassName() {
+        return getOptional("kylin.engine.spark.cluster-info-fetcher-class-name",
+                "io.kyligence.kap.cluster.YarnInfoFetcher");
+    }
 }
