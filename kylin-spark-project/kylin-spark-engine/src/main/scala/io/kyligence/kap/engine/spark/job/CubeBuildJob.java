@@ -65,8 +65,8 @@ import org.apache.spark.sql.hive.utils.ResourceDetectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DFBuildJob extends SparkApplication {
-    protected static final Logger logger = LoggerFactory.getLogger(DFBuildJob.class);
+public class CubeBuildJob extends SparkApplication {
+    protected static final Logger logger = LoggerFactory.getLogger( CubeBuildJob.class);
     protected static String TEMP_DIR_SUFFIX = "_temp";
 
 //    private NDataflowManager dfMgr;
@@ -358,7 +358,7 @@ public class DFBuildJob extends SparkApplication {
     }
 
     public static void main(String[] args) {
-        DFBuildJob nDataflowBuildJob = new DFBuildJob();
+        CubeBuildJob nDataflowBuildJob = new CubeBuildJob();
         nDataflowBuildJob.execute(args);
     }
 }
