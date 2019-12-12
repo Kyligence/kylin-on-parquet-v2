@@ -53,7 +53,7 @@ public class LayoutEntity implements IStorageAware {
     private List<Integer> shardByColumns = Lists.newArrayList();
 
     private ImmutableBiMap<Integer, TblColRef> orderedDimensions;
-    private ImmutableBiMap<Integer, MeasureDesc> orderedMeasures;
+    private ImmutableBiMap<Integer, DataModel.Measure> orderedMeasures;
 
     @Override
     public int getStorageType() {
@@ -108,7 +108,7 @@ public class LayoutEntity implements IStorageAware {
         }
     }
 
-    public ImmutableBiMap<Integer, MeasureDesc> getOrderedMeasures() { // measure order abides by column family
+    public ImmutableBiMap<Integer, DataModel.Measure> getOrderedMeasures() { // measure order abides by column family
         if (orderedMeasures != null)
             return orderedMeasures;
 
@@ -116,7 +116,7 @@ public class LayoutEntity implements IStorageAware {
             if (orderedMeasures != null)
                 return orderedMeasures;
 
-            ImmutableBiMap.Builder<Integer, MeasureDesc> measureBuilder = ImmutableBiMap.builder();
+            ImmutableBiMap.Builder<Integer, DataModel.Measure> measureBuilder = ImmutableBiMap.builder();
 
             for (int colId : colOrder) {
                 if (colId >= DataModel.MEASURE_ID_BASE)
