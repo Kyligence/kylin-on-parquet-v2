@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -368,7 +369,7 @@ public class NSparkExecutable extends AbstractExecutable {
 
         sb.append("--name job_step_%s ");
         sb.append("--jars %s %s %s");
-        String cmd = String.format(sb.toString(), hadoopConf, KylinConfig.getSparkHome(), getId(), jars, kylinJobJar,
+        String cmd = String.format(Locale.ROOT, sb.toString(), hadoopConf, KylinConfig.getSparkHome(), getId(), jars, kylinJobJar,
                 appArgs);
         logger.info("spark submit cmd: {}", cmd);
         return cmd;
