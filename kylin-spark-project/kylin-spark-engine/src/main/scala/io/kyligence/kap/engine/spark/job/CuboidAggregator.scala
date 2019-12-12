@@ -21,10 +21,10 @@ package io.kyligence.kap.engine.spark.job
 import java.util
 
 import io.kyligence.kap.engine.spark.builder.DFBuilderHelper.ENCODE_SUFFIX
+import org.apache.kylin.engine.spark.metadata.cube.model.DataModel.Measure
 import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, DataSegment, SpanningTree}
 import org.apache.kylin.measure.bitmap.BitmapMeasureType
 import org.apache.kylin.measure.hllc.HLLCMeasureType
-import org.apache.kylin.metadata.model.MeasureDesc
 import org.apache.spark.sql.functions.{col, _}
 import org.apache.spark.sql.types.{StringType, _}
 import org.apache.spark.sql.udaf._
@@ -38,7 +38,7 @@ object CuboidAggregator {
   def agg(ss: SparkSession,
           dataSet: DataFrame,
           dimensions: util.Set[Integer],
-          measures: util.Map[Integer, MeasureDesc],
+          measures: util.Map[Integer, Measure],
           seg: DataSegment,
           spanningTree: SpanningTree): DataFrame = {
     val needJoin = spanningTree match {
@@ -54,7 +54,7 @@ object CuboidAggregator {
   def aggInternal(ss: SparkSession,
                   dataSet: DataFrame,
                   dimensions: util.Set[Integer],
-                  measures: util.Map[Integer, MeasureDesc],
+                  measures: util.Map[Integer, Measure],
                   flatTableDesc: CubeJoinedFlatTableDesc,
                   isSparkSql: Boolean): DataFrame = {
     if (measures.isEmpty) {
@@ -180,7 +180,7 @@ object CuboidAggregator {
     }
   }
 
-  private def measureColumns(schema: StructType, measures: util.Map[Integer, MeasureDesc]): mutable.Iterable[Column] = {
+  private def measureColumns(schema: StructType, measures: util.Map[Integer, Measure]): mutable.Iterable[Column] = {
     measures.asScala.map { e =>
       e._2.getFunction.getExpression.toUpperCase match {
         case "SUM" =>
