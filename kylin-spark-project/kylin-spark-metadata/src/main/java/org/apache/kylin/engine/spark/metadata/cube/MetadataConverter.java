@@ -38,9 +38,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MetadataConverter {
-    private static int DIMENSION_START_ID = 0;
-    private static int MEASURE_START_ID = 10000;
-
     private MetadataConverter() {
     }
 
@@ -75,7 +72,7 @@ public class MetadataConverter {
         // Cols => NameColumns
         List<DataModel.NamedColumn> allNamedColumns = new ArrayList<>();
         List<DataModel.Measure> measures = new ArrayList<>();
-        int id = DIMENSION_START_ID;
+        int id = DataModel.DIMENSION_ID_BASE;
         for (DimensionDesc dimensionDesc : cubeDesc.getDimensions()) {
             DataModel.NamedColumn namedColumn = new DataModel.NamedColumn();
             namedColumn.setName(dimensionDesc.getName());
@@ -85,7 +82,7 @@ public class MetadataConverter {
             namedColumn.setId(id++);
             allNamedColumns.add(namedColumn);
         }
-        id = MEASURE_START_ID;
+        id = DataModel.MEASURE_ID_BASE;
         for (MeasureDesc measureDesc : cubeDesc.getMeasures()) {
             DataModel.NamedColumn namedColumn = new DataModel.NamedColumn();
             namedColumn.setId(id);
