@@ -34,13 +34,12 @@ import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
 
 import scala.collection.JavaConverters._
 
-class DFChooser(toBuildTree: SpanningTree,
-                var seg: DataSegment,
-                jobId: String,
-                ss: SparkSession,
-                config: KylinConfig,
-                needEncoding: Boolean)
-  extends Logging {
+class ParentSourceChooser(toBuildTree: SpanningTree,
+                          var seg: DataSegment,
+                          jobId: String,
+                          ss: SparkSession,
+                          config: KylinConfig,
+                          needEncoding: Boolean) extends Logging {
 
   // build from built cuboid.
   var reuseSources: java.util.Map[java.lang.Long, NBuildSourceInfo] = Maps.newHashMap()
@@ -50,7 +49,7 @@ class DFChooser(toBuildTree: SpanningTree,
 
   val flatTableDesc = new CubeJoinedFlatTableDesc(
     MetadataConverter.getCubeDesc(seg.getCube),
-    DFChooser.needJoinLookupTables(seg.getModel, toBuildTree))
+    ParentSourceChooser.needJoinLookupTables(seg.getModel, toBuildTree))
 
   def decideSources(): Unit = {
     toBuildTree.getRootIndexEntities.asScala.foreach { entity =>
@@ -159,10 +158,10 @@ class DFChooser(toBuildTree: SpanningTree,
     val viewPath = persistFactViewIfNecessary()
     val sourceInfo = new NBuildSourceInfo
     sourceInfo.setSparkSession(ss)
-    sourceInfo.setLayoutId(DFChooser.FLAT_TABLE_FLAG)
+    sourceInfo.setLayoutId(ParentSourceChooser.FLAT_TABLE_FLAG)
     sourceInfo.setViewFactTablePath(viewPath)
 
-    val needJoin = DFChooser.needJoinLookupTables(seg.getModel, toBuildTree)
+    val needJoin = ParentSourceChooser.needJoinLookupTables(seg.getModel, toBuildTree)
     val flatTableDesc = new CubeJoinedFlatTableDesc(seg.getCube, seg.getSegRange, needJoin)
     val flatTable = new CreateFlatTable(flatTableDesc, seg, toBuildTree, ss, sourceInfo)
     val afterJoin: Dataset[Row] = flatTable.generateDataset(needEncoding, needJoin)
@@ -173,14 +172,14 @@ class DFChooser(toBuildTree: SpanningTree,
   }
 }
 
-object DFChooser {
+object ParentSourceChooser {
   def apply(toBuildTree: SpanningTree,
             seg: DataSegment,
             jobId: String,
             ss: SparkSession,
             config: KylinConfig,
-            needEncoding: Boolean): DFChooser =
-    new DFChooser(toBuildTree: SpanningTree,
+            needEncoding: Boolean): ParentSourceChooser =
+    new ParentSourceChooser(toBuildTree: SpanningTree,
       seg: DataSegment,
       jobId,
       ss: SparkSession,

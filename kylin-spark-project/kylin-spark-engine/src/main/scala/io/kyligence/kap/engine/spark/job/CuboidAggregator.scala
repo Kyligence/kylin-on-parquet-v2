@@ -44,7 +44,7 @@ object CuboidAggregator {
     val needJoin = spanningTree match {
       // when merge cuboid spanning tree is null
       case null => true
-      case _ => DFChooser.needJoinLookupTables(seg.getModel, spanningTree)
+      case _ => ParentSourceChooser.needJoinLookupTables(seg.getModel, spanningTree)
     }
     val flatTableDesc =
       new CubeJoinedFlatTableDesc(seg.getCube, seg.getSegRange, needJoin)
