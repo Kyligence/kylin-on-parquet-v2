@@ -28,18 +28,14 @@ import com.google.common.collect.Maps;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.KylinConfigExt;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
-import org.apache.kylin.common.util.JsonUtil;
-import org.apache.kylin.metadata.model.TableRef;
-import org.apache.kylin.engine.spark.metadata.cube.PathManager;
+import org.apache.kylin.cube.model.DimensionDesc;
+import org.apache.kylin.metadata.model.MeasureDesc;
 import org.apache.kylin.metadata.model.TblColRef;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.apache.kylin.common.persistence.ResourceStore.CUBE_RESOURCE_ROOT;
 import static org.apache.kylin.metadata.MetadataConstants.FILE_SURFIX;
@@ -64,7 +60,9 @@ public class Cube extends RootPersistentEntity {
     @JsonProperty("segments")
     private List<DataSegment> segments = new ArrayList<>();
 
-    private Cube(KylinConfig config) {}
+    private Cube(KylinConfig config) {
+        this.config = config;
+    }
 
     private transient SpanningTree spanningTree = null; // transient, because can self recreate
 
@@ -76,7 +74,7 @@ public class Cube extends RootPersistentEntity {
     private List<MeasureDesc> measures = new ArrayList<>();
 
     private transient BiMap<Integer, TblColRef> effectiveDimCols; // BiMap impl (com.google.common.collect.Maps$FilteredEntryBiMap) is not serializable
-    private transient BiMap<Integer, MeasureDesc> effectiveMeasures; // BiMap impl (com.google.common.collect.Maps$FilteredEntryBiMap) is not serializable
+    private transient BiMap<Integer, DataModel.Measure> effectiveMeasures; // BiMap impl (com.google.common.collect.Maps$FilteredEntryBiMap) is not serializable
 
     public static Cube getInstance(KylinConfig config) {
         return new Cube(config);
@@ -133,11 +131,11 @@ public class Cube extends RootPersistentEntity {
         this.effectiveDimCols = effectiveDimCols;
     }
 
-    public BiMap<Integer, MeasureDesc> getEffectiveMeasures() {
+    public BiMap<Integer, DataModel.Measure> getEffectiveMeasures() {
         return effectiveMeasures;
     }
 
-    public void setEffectiveMeasures(BiMap<Integer, MeasureDesc> effectiveMeasures) {
+    public void setEffectiveMeasures(BiMap<Integer, DataModel.Measure> effectiveMeasures) {
         this.effectiveMeasures = effectiveMeasures;
     }
 
@@ -250,21 +248,21 @@ public class Cube extends RootPersistentEntity {
         return indexEntities;
     }
 
-    public Set<String> collectPrecalculationResource() {
-        Set<String> r = new LinkedHashSet<>();
-
-        // cube & segments
-        r.add(PathManager.getCubePath(project, getId()));
-
-        // project & model & tables
-        r.add(PathManager.getProjectPath(project));
-        r.add(PathManager.getModelPath(project, getId()));
-        for (TableRef t : getModel().getAllTableRefs()) {
-            r.add(t.getTableDesc().getResourcePath());
-        }
-
-        return r;
-    }
+//    public Set<String> collectPrecalculationResource() {
+//        Set<String> r = new LinkedHashSet<>();
+//
+//        // cube & segments
+//        r.add(PathManager.getCubePath(project, getId()));
+//
+//        // project & model & tables
+//        r.add(PathManager.getProjectPath(project));
+//        r.add(PathManager.getModelPath(project, getId()));
+//        for (TableRef t : getModel().getAllTableRefs()) {
+//            r.add(t.getTableDesc().getResourcePath());
+//        }
+//
+//        return r;
+//    }
 
     public LayoutEntity getCuboidLayout(Long cuboidLayoutId) {
         return getSpanningTree().getCuboidLayout(cuboidLayoutId);
