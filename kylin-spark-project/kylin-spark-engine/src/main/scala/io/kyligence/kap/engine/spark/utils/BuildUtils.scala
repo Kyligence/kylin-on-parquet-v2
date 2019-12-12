@@ -19,6 +19,7 @@
 package io.kyligence.kap.engine.spark.utils
 
 import java.io.IOException
+import java.util.Locale
 
 import io.kyligence.kap.engine.spark.NSparkCubingEngine
 import io.kyligence.kap.engine.spark.job.NSparkCubingUtil
@@ -97,7 +98,7 @@ object BuildUtils extends Logging {
       repartitionNum
     } else {
       throw new RuntimeException(
-        String.format("Temp path does not exist before repartition. Temp path: %s.", tempPath))
+        String.format(Locale.ROOT, "Temp path does not exist before repartition. Temp path: %s.", tempPath))
     }
   }
 

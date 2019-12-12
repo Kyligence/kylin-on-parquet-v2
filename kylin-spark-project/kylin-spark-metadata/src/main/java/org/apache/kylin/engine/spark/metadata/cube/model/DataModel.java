@@ -18,6 +18,7 @@
 
 package org.apache.kylin.engine.spark.metadata.cube.model;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.BiMap;
@@ -26,11 +27,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.RootPersistentEntity;
-import org.apache.kylin.metadata.model.JoinTableDesc;
 import org.apache.kylin.metadata.model.JoinsTree;
-import org.apache.kylin.metadata.model.PartitionDesc;
-import org.apache.kylin.metadata.model.TableRef;
-import org.apache.kylin.metadata.model.TblColRef;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -316,6 +313,13 @@ public class DataModel extends RootPersistentEntity {
         this.allMeasures = allMeasures;
     }
 
+    public boolean isLookupTable(TableRef t) {
+        if (t == null)
+            return false;
+        else
+            return lookupTableRefs.contains(t);
+    }
+
     // find by unique name, that must uniquely identifies a table in the model
     public TableRef findTable(String table) throws IllegalArgumentException {
         TableRef result = tableNameMap.get(table.toUpperCase(Locale.ROOT));
@@ -413,7 +417,8 @@ public class DataModel extends RootPersistentEntity {
         SCHEMA, NULL, EVENT
     }
 
-    public static class NamedColumn {
+    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
+    public static class NamedColumn implements Serializable {
         @JsonProperty("id")
         private int id;
 
@@ -428,12 +433,87 @@ public class DataModel extends RootPersistentEntity {
         @JsonInclude(JsonInclude.Include.NON_DEFAULT)
         private ColumnStatus status = ColumnStatus.EXIST;
 
+        public NamedColumn() {
+        }
+
         public boolean isExist() {
             return status != ColumnStatus.TOMB;
         }
 
         public boolean isDimension() {
             return status == ColumnStatus.DIMENSION;
+        }
+
+        public int getId() {
+            return this.id;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public String getAliasDotColumn() {
+            return this.aliasDotColumn;
+        }
+
+        public ColumnStatus getStatus() {
+            return this.status;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public void setAliasDotColumn(String aliasDotColumn) {
+            this.aliasDotColumn = aliasDotColumn;
+        }
+
+        public void setStatus(ColumnStatus status) {
+            this.status = status;
+        }
+
+        public boolean equals(final Object o) {
+            if (o == this) return true;
+            if (!(o instanceof NamedColumn)) return false;
+            final NamedColumn other = (NamedColumn) o;
+            if (!other.canEqual((Object) this)) return false;
+            if (this.getId() != other.getId()) return false;
+            final Object this$name = this.getName();
+            final Object other$name = other.getName();
+            if (this$name == null ? other$name != null : !this$name.equals(other$name)) return false;
+            final Object this$aliasDotColumn = this.getAliasDotColumn();
+            final Object other$aliasDotColumn = other.getAliasDotColumn();
+            if (this$aliasDotColumn == null ? other$aliasDotColumn != null : !this$aliasDotColumn.equals(other$aliasDotColumn))
+                return false;
+            final Object this$status = this.getStatus();
+            final Object other$status = other.getStatus();
+            if (this$status == null ? other$status != null : !this$status.equals(other$status)) return false;
+            return true;
+        }
+
+        protected boolean canEqual(final Object other) {
+            return other instanceof NamedColumn;
+        }
+
+        public int hashCode() {
+            final int PRIME = 59;
+            int result = 1;
+            result = result * PRIME + this.getId();
+            final Object $name = this.getName();
+            result = result * PRIME + ($name == null ? 43 : $name.hashCode());
+            final Object $aliasDotColumn = this.getAliasDotColumn();
+            result = result * PRIME + ($aliasDotColumn == null ? 43 : $aliasDotColumn.hashCode());
+            final Object $status = this.getStatus();
+            result = result * PRIME + ($status == null ? 43 : $status.hashCode());
+            return result;
+        }
+
+        public String toString() {
+            return "NDataModel.NamedColumn(id=" + this.getId() + ", name=" + this.getName() + ", aliasDotColumn=" + this.getAliasDotColumn() + ", status=" + this.getStatus() + ")";
         }
     }
 
