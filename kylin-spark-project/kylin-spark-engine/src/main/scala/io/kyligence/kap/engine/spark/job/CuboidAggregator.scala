@@ -19,13 +19,13 @@
 package io.kyligence.kap.engine.spark.job
 
 import java.util
+import java.util.Locale
 
 import io.kyligence.kap.engine.spark.builder.DFBuilderHelper.ENCODE_SUFFIX
 import org.apache.kylin.engine.spark.metadata.cube.model.DataModel.Measure
-import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, DataSegment, SpanningTree}
+import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, DataSegment, SpanningTree, TblColRef}
 import org.apache.kylin.measure.bitmap.BitmapMeasureType
 import org.apache.kylin.measure.hllc.HLLCMeasureType
-import org.apache.kylin.metadata.model.TblColRef
 import org.apache.spark.sql.functions.{col, _}
 import org.apache.spark.sql.types.{StringType, _}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -98,7 +98,7 @@ object CuboidAggregator {
         }
       }
 
-      function.getExpression.toUpperCase match {
+      function.getExpression.toUpperCase(Locale.ROOT) match {
         case "MAX" =>
           max(columns.head).as(measureEntry._1.toString)
         case "MIN" =>
@@ -179,7 +179,7 @@ object CuboidAggregator {
         val columns = NSparkCubingUtil.getColumns(dimensions) ++
           measures.asScala.map {
             measure =>
-              measure._2.getFunction.getExpression.toUpperCase match {
+              measure._2.getFunction.getExpression.toUpperCase(Locale.ROOT) match {
                 case "SUM" =>
                   val measureId = measure._1.toString
                   val dataType = seq.find(_.name.equals(measureId)).map(_.dataType).get
@@ -199,7 +199,7 @@ object CuboidAggregator {
         val seq = dataSet.schema
         val columns = measures.asScala.map {
           measure =>
-            measure._2.getFunction.getExpression.toUpperCase match {
+            measure._2.getFunction.getExpression.toUpperCase(Locale.ROOT) match {
               case "SUM" =>
                 val measureId = measure._1.toString
                 val dataType = seq.find(_.name.equals(measureId)).map(_.dataType).get

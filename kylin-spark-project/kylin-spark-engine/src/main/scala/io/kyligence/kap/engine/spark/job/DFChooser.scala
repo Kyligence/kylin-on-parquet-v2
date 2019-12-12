@@ -24,9 +24,7 @@ import io.kyligence.kap.engine.spark.builder._
 import io.kyligence.kap.engine.spark.utils.SparkDataSource._
 import org.apache.kylin.common.KylinConfig
 import org.apache.kylin.engine.spark.metadata.cube.model.DataModel.TableKind
-import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, CuboidLayoutChooser, DataModel, DataSegment, IndexEntity, LayoutEntity, SpanningTree}
-import org.apache.kylin.engine.spark.metadata.cube.MetadataConverter
-import org.apache.kylin.metadata.model.TblColRef
+import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, CuboidLayoutChooser, DataModel, DataSegment, IndexEntity, LayoutEntity, SpanningTree, TblColRef}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
@@ -45,7 +43,7 @@ class DFChooser(toBuildTree: SpanningTree,
     Maps.newHashMap[java.lang.Long, NBuildSourceInfo]()
   var flatTableSource: NBuildSourceInfo = _
   val flatTableDesc =
-    new CubeJoinedFlatTableDesc(seg.getCube, DFChooser.needJoinLookupTables(seg.getModel, toBuildTree))
+    new CubeJoinedFlatTableDesc(seg, DFChooser.needJoinLookupTables(seg.getModel, toBuildTree))
 
   @throws[Exception]
   def decideSources(): Unit = {
