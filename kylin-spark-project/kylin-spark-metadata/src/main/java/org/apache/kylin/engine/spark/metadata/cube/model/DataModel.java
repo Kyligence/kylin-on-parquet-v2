@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 
 public class DataModel extends RootPersistentEntity {
     private static final Logger logger = LoggerFactory.getLogger(DataModel.class);
+    public static int DIMENSION_ID_BASE = 0;
     public static final int MEASURE_ID_BASE = 100000;
 
     public enum TableKind implements Serializable {
