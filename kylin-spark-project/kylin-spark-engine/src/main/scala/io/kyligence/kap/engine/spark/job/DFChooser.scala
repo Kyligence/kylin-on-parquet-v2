@@ -19,20 +19,20 @@
 package io.kyligence.kap.engine.spark.job
 
 import com.google.common.base.Preconditions
-import com.google.common.collect.{Lists, Maps}
+import com.google.common.collect.Maps
 import io.kyligence.kap.engine.spark.builder._
 import io.kyligence.kap.engine.spark.utils.SparkDataSource._
 import org.apache.kylin.common.KylinConfig
-import org.apache.kylin.engine.spark.metadata.cube.model.DataModel.TableKind
-import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, CuboidLayoutChooser, DataModel, DataSegment, IndexEntity, LayoutEntity, SpanningTree}
+import org.apache.kylin.cube.model.CubeJoinedFlatTableDesc
 import org.apache.kylin.engine.spark.metadata.cube.MetadataConverter
+import org.apache.kylin.engine.spark.metadata.cube.model.DataModel.TableKind
+import org.apache.kylin.engine.spark.metadata.cube.model._
 import org.apache.kylin.metadata.model.TblColRef
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
 
 class DFChooser(toBuildTree: SpanningTree,
                 var seg: DataSegment,
@@ -41,66 +41,79 @@ class DFChooser(toBuildTree: SpanningTree,
                 config: KylinConfig,
                 needEncoding: Boolean)
   extends Logging {
-  var reuseSources: java.util.Map[java.lang.Long, NBuildSourceInfo] =
-    Maps.newHashMap[java.lang.Long, NBuildSourceInfo]()
+
+  // build from built cuboid.
+  var reuseSources: java.util.Map[java.lang.Long, NBuildSourceInfo] = Maps.newHashMap()
+
+  // build from flattable.
   var flatTableSource: NBuildSourceInfo = _
-  val flatTableDesc =
-    new CubeJoinedFlatTableDesc(seg.getCube, DFChooser.needJoinLookupTables(seg.getModel, toBuildTree))
 
-  @throws[Exception]
+  val flatTableDesc = new CubeJoinedFlatTableDesc(
+    MetadataConverter.getCubeDesc(seg.getCube),
+    DFChooser.needJoinLookupTables(seg.getModel, toBuildTree))
+
   def decideSources(): Unit = {
-    var map = Map.empty[Long, NBuildSourceInfo]
-    toBuildTree.getRootIndexEntities.asScala
-      .foreach { desc =>
-        val layout = CuboidLayoutChooser.selectLayoutForBuild(seg, desc)
-
-        if (layout != null) {
-          if (map.contains(layout.getId)) {
-            map.apply(layout.getId).addCuboid(desc)
-          } else {
-            val BuildSourceInfo = getSourceFromLayout(layout, desc)
-            map += (layout.getId -> BuildSourceInfo)
-          }
-        } else {
-          if (flatTableSource == null) {
-            if (needEncoding) {
-              val snapshotBuilder = new DFSnapshotBuilder(seg, ss)
-              seg = snapshotBuilder.buildSnapshot
-            }
-            flatTableSource = getFlatTable()
-          }
-          flatTableSource.addCuboid(desc)
-        }
+    toBuildTree.getRootIndexEntities.asScala.foreach { entity =>
+      val parentLayout = CuboidLayoutChooser.selectLayoutForBuild(seg, entity)
+      if (parentLayout != null) {
+        decideParentLayoutSource(entity, parentLayout)
+      } else {
+        decideFlatTableSource(entity)
       }
-    map.foreach(entry => reuseSources.put(entry._1, entry._2))
+    }
+  }
+
+  private def decideFlatTableSource(entity: IndexEntity): Unit = {
+    if (flatTableSource == null) {
+      if (needEncoding) {
+        // hacked, for some case, you do not want to trigger buildSnapshot
+        // eg: resource detect
+        // Move this to a more suitable place
+        val builder = new DFSnapshotBuilder(seg, ss)
+        seg = builder.buildSnapshot
+      }
+      flatTableSource = getFlatTable()
+    }
+    flatTableSource.addCuboid(entity)
+  }
+
+  private def decideParentLayoutSource(entity: IndexEntity, layout: LayoutEntity): Unit = {
+    val id = layout.getId
+    if (reuseSources.containsKey(id)) {
+      reuseSources.get(id).addCuboid(entity)
+    } else {
+      val source = getSourceFromLayout(layout, entity)
+      reuseSources.put(id, source)
+    }
   }
 
   def persistFlatTableIfNecessary(): String = {
     var path = ""
-    if (flatTableSource != null
-      && flatTableSource.getToBuildCuboids.size() > config.getPersistFlatTableThreshold) {
-      val columns = new mutable.ListBuffer[String]
+    if (flatTableSource != null && flatTableSource.getToBuildCuboids.size() > config.getPersistFlatTableThreshold) {
+
       val df = flatTableSource.getFlattableDS
-
-      val colIndex = df.schema.fieldNames.zipWithIndex.map(tp => (tp._2, tp._1)).toMap
-      flatTableSource.getToBuildCuboids.asScala.foreach { c =>
-        columns.appendAll(c.getDimensions.asScala.map(_.toString))
-
-        c.getEffectiveMeasures.asScala.foreach { mea =>
-          val parameters = mea._2.getFunction.getParameters.asScala
-          if (parameters.head.isColumnType) {
-            val measureUsedCols = parameters.map(p => colIndex.apply(flatTableDesc.getColumnIndex(p.getColRef)).toString)
-            columns.appendAll(measureUsedCols)
-          }
-        }
-      }
-
-      df.select(columns.map(col): _*)
       if (df.schema.nonEmpty) {
+        val allUsedCols = flatTableSource.getToBuildCuboids.asScala.flatMap { c =>
+          val dims = c.getDimensions.asScala.map(_.toString)
+
+          val measureUsedCols = c.getEffectiveMeasures.asScala.flatMap { mea =>
+            val parameters = mea._2.getFunction.getParameters.asScala
+            if (parameters.head.isColumnType) {
+              val colIndex = df.schema.fieldNames.zipWithIndex.map(tp => (tp._2, tp._1)).toMap
+              parameters.map(p => colIndex.apply(flatTableDesc.getColumnIndex(p.getColRef)).toString)
+            } else {
+              Nil
+            }
+          }
+
+          dims ++ measureUsedCols
+        }.toSeq
+
+        df.select(allUsedCols.map(col): _*)
         path = s"${config.getJobTmpFlatTableDir(seg.getProject, jobId)}"
         ss.sparkContext.setJobDescription("Persist flat table.")
         df.write.mode(SaveMode.Overwrite).parquet(path)
-        logInfo(s"Persist flat table into:$path. Selected cols in table are $columns.")
+        logInfo(s"Persist flat table into:$path. Selected cols in table are $allUsedCols.")
         flatTableSource.setParentStoragePath(path)
       }
     }
@@ -127,7 +140,7 @@ class DFChooser(toBuildTree: SpanningTree,
   }
 
   private def getSourceFromLayout(layout: LayoutEntity,
-                                  indexEntity: IndexEntity) = {
+                                  indexEntity: IndexEntity): NBuildSourceInfo = {
     val buildSource = new NBuildSourceInfo
     val segDetails = seg.getSegDetails
     val dataCuboid = segDetails.getLayoutById(layout.getId)
@@ -138,12 +151,10 @@ class DFChooser(toBuildTree: SpanningTree,
     buildSource.setLayoutId(layout.getId)
     buildSource.setByteSize(dataCuboid.getByteSize)
     buildSource.addCuboid(indexEntity)
-    logInfo(
-      s"Reuse a suitable layout: ${layout.getId} for building cuboid: ${indexEntity.getId}")
+    logInfo(s"Reuse a suitable layout: ${layout.getId} for building cuboid: ${indexEntity.getId}")
     buildSource
   }
 
-  @throws[Exception]
   private def getFlatTable(): NBuildSourceInfo = {
     val viewPath = persistFactViewIfNecessary()
     val sourceInfo = new NBuildSourceInfo
@@ -187,34 +198,25 @@ object DFChooser {
     val joinTables = model.getJoinTables
     val factTable = model.getRootFactTable
     var needJoin = false
-    if (joinTables.asScala.filter(_.getJoin.isLeftJoin).size != joinTables.size()) {
+    if (joinTables.asScala.count(_.getJoin.isLeftJoin) != joinTables.size()) {
       needJoin = true
     }
 
-    if (joinTables.asScala.filter(_.getKind == TableKind.LOOKUP).size != joinTables.size()) {
+    if (joinTables.asScala.count(_.getKind == TableKind.LOOKUP) != joinTables.size()) {
       needJoin = true
     }
 
-    val toBuildCols = Lists.newArrayList[TblColRef]()
-    toBuildTree.getRootIndexEntities.asScala.map(
-      index => {
-        index.getEffectiveMeasures.asScala.map(
-          mea =>
-            toBuildCols.addAll(mea._2.getFunction.getColRefs)
-        )
-        index.getEffectiveDimCols.asScala.map(
-          dim =>
-            toBuildCols.add(dim._2)
-        )
+    val toBuiltCols: Set[TblColRef] = toBuildTree.getRootIndexEntities.asScala.flatMap(index => {
+      val measureUsedCols = index.getEffectiveMeasures.asScala.flatMap(_._2.getFunction.getColRefs.asScala)
+      val dimUsedCols = index.getEffectiveDimCols.asScala.values
+      measureUsedCols ++ dimUsedCols
+    }).toSet
+
+    toBuiltCols.foreach(col =>
+      if (!factTable.getTableIdentity.equalsIgnoreCase(col.getTableRef.getTableIdentity)) {
+        needJoin = true
       }
     )
-    toBuildCols.asScala.distinct.map(
-      col =>
-        if (!factTable.getTableIdentity.equalsIgnoreCase(col.getTableRef.getTableIdentity)) {
-          needJoin = true
-        }
-    )
-
     needJoin
   }
 }
