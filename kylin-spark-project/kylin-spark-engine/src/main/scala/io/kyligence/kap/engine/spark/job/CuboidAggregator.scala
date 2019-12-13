@@ -214,6 +214,10 @@ object CuboidAggregator {
     new Column(column.toString() + ENCODE_SUFFIX)
   }
 
+  def wrapEncodeColumn(column: Column): Column = {
+    new Column(column.toString() + ENCODE_SUFFIX)
+  }
+
   def wrapMutilHllcColumn(columns: Column*): Column = {
     var col: Column = when(isnull(columns.head), null)
     for (inputCol <- columns.drop(1)) {
