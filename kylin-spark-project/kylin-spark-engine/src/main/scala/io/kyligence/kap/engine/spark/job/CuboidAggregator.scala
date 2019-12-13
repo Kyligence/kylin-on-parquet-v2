@@ -25,6 +25,9 @@ import org.apache.kylin.engine.spark.metadata.cube.model.DataModel.Measure
 import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, DataSegment, SpanningTree}
 import org.apache.kylin.measure.bitmap.BitmapMeasureType
 import org.apache.kylin.measure.hllc.HLLCMeasureType
+import org.apache.kylin.metadata.datatype
+import org.apache.kylin.metadata.model.ParameterDesc
+import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
 import org.apache.spark.sql.functions.{col, _}
 import org.apache.spark.sql.types.{StringType, _}
 import org.apache.spark.sql.udaf._
@@ -33,6 +36,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 object CuboidAggregator {
   def agg(ss: SparkSession,
@@ -46,8 +50,7 @@ object CuboidAggregator {
       case null => true
       case _ => ParentSourceChooser.needJoinLookupTables(seg.getModel, spanningTree)
     }
-    val flatTableDesc =
-      new CubeJoinedFlatTableDesc(seg.getCube, seg.getSegRange, needJoin)
+    val flatTableDesc = new CubeJoinedFlatTableDesc(seg.getCube, seg.getSegRange, needJoin)
     aggInternal(ss, dataSet, dimensions, measures, flatTableDesc, isSparkSql = false)
   }
 
@@ -70,22 +73,19 @@ object CuboidAggregator {
       val function = e._2.getFunction
       val parameters = function.getParameters.asScala.toList
       val columns = new mutable.ListBuffer[Column]
-      val returnDataType = function.getReturnDataType
+      val returnType = function.getReturnDataType
       val expression = function.getExpression
-      if (parameters.head.isColumnType) {
-        if (reuseLayout) {
-          columns.append(col(e._1.toString))
-        } else {
+
+      if (reuseLayout) {
+        columns.append(col(e._1.toString))
+      } else {
+        if (parameters.head.isColumnType) {
           val colIndex = dataSet.schema.fieldNames.zipWithIndex.map(tp => (tp._2, tp._1)).toMap
           columns.appendAll(parameters.map(p => col(colIndex.apply(flatTableDesc.getColumnIndex(p.getColRef)))))
-        }
-      } else {
-        if (reuseLayout) {
-          columns.append(col(e._1.toString))
         } else {
           val value = parameters.head.getValue
           if (expression.equalsIgnoreCase("SUM")) {
-            columns.append(lit(value).cast(SparkTypeUtil.toSparkType(returnDataType)))
+            columns.append(lit(value).cast(SparkTypeUtil.toSparkType(returnType)))
           } else {
             columns.append(lit(value))
           }
@@ -110,49 +110,15 @@ object CuboidAggregator {
           if (isSparkSql) {
             countDistinct(columns.head).as(e._1.toString)
           } else {
-            if (!reuseLayout) {
-              var col = columns.head
-              if (returnDataType.getName.equalsIgnoreCase(BitmapMeasureType.DATATYPE_BITMAP)) {
-                col = wrapEncodeColumn(columns.head)
-                new Column(EncodePreciseCountDistinct(col.expr).toAggregateExpression()).as(e._1.toString)
-              } else if (columns.length > 1 && returnDataType.getName.startsWith(HLLCMeasureType.DATATYPE_HLLC)) {
-                col = wrapMutilHllcColumn(columns: _*)
-                new Column(EncodeApproxCountDistinct(col.expr, returnDataType.getPrecision).toAggregateExpression())
-                  .as(e._1.toString)
-              } else {
-                new Column(EncodeApproxCountDistinct(col.expr, returnDataType.getPrecision).toAggregateExpression())
-                  .as(e._1.toString)
-              }
-            } else {
-              var col = columns.head
-              if (returnDataType.getName.equalsIgnoreCase(BitmapMeasureType.DATATYPE_BITMAP)) {
-                new Column(ReusePreciseCountDistinct(col.expr).toAggregateExpression()).as(e._1.toString)
-              } else if (columns.length > 1 && returnDataType.getName.startsWith(HLLCMeasureType.DATATYPE_HLLC)) {
-                col = wrapMutilHllcColumn(columns: _*)
-                new Column(ReuseApproxCountDistinct(col.expr, returnDataType.getPrecision).toAggregateExpression())
-                  .as(e._1.toString)
-              } else {
-                new Column(ReuseApproxCountDistinct(col.expr, returnDataType.getPrecision).toAggregateExpression())
-                  .as(e._1.toString)
-              }
-            }
+            val cdAggregate = getCountDistinctAggregate(columns, returnType, reuseLayout)
+            new Column(cdAggregate.toAggregateExpression()).as(e._1.toString)
           }
         case "TOP_N" =>
-          val measure = parameters.head.getColRef.getColumnDesc
-          val schema = StructType(parameters.map(_.getColRef.getColumnDesc).map { col =>
-            val dateType = SparkTypeUtil.toSparkType(col.getType)
-            if (col == measure) {
-              StructField(s"MEASURE_${col.getName}", dateType)
-            } else {
-              StructField(s"DIMENSION_${col.getName}", dateType)
-            }
-          })
-
-          val udfName = UdfManager.register(returnDataType,
-            expression, schema, !reuseLayout)
+          val schema: StructType = constructTopNSchema(parameters)
+          val udfName = UdfManager.register(returnType, expression, schema, !reuseLayout)
           callUDF(udfName, columns: _*).as(e._1.toString)
         case "PERCENTILE_APPROX" =>
-          val udfName = UdfManager.register(returnDataType, expression, null, !reuseLayout)
+          val udfName = UdfManager.register(returnType, expression, null, !reuseLayout)
           if (!reuseLayout) {
             callUDF(udfName, columns.head.cast(StringType)).as(e._1.toString)
           } else {
@@ -178,6 +144,49 @@ object CuboidAggregator {
     } else {
       df
     }
+  }
+
+  private def getCountDistinctAggregate(columns: ListBuffer[Column], returnType: datatype.DataType, reuseLayout: Boolean): AggregateFunction = {
+    var col = columns.head
+    if (isBitmap(returnType)) {
+      if (!reuseLayout) {
+        EncodePreciseCountDistinct(wrapEncodeColumn(columns.head).expr)
+      } else {
+        ReusePreciseCountDistinct(col.expr)
+      }
+    } else {
+      val precision = returnType.getPrecision
+
+      if (isMultiHllcCol(columns, returnType)) {
+        col = wrapMutilHllcColumn(columns: _*)
+      }
+      if (!reuseLayout) {
+        EncodeApproxCountDistinct(col.expr, precision)
+      } else {
+        ReuseApproxCountDistinct(col.expr, precision)
+      }
+    }
+  }
+
+  private def constructTopNSchema(parameters: List[ParameterDesc]): StructType = {
+    val measure = parameters.head.getColRef.getColumnDesc
+    val schema = StructType(parameters.map(_.getColRef.getColumnDesc).map { col =>
+      val dateType = SparkTypeUtil.toSparkType(col.getType)
+      if (col == measure) {
+        StructField(s"MEASURE_${col.getName}", dateType)
+      } else {
+        StructField(s"DIMENSION_${col.getName}", dateType)
+      }
+    })
+    schema
+  }
+
+  private def isMultiHllcCol(columns: ListBuffer[Column], returnDataType: datatype.DataType) = {
+    columns.length > 1 && returnDataType.getName.startsWith(HLLCMeasureType.DATATYPE_HLLC)
+  }
+
+  private def isBitmap(returnDataType: datatype.DataType) = {
+    returnDataType.getName.equalsIgnoreCase(BitmapMeasureType.DATATYPE_BITMAP)
   }
 
   private def measureColumns(schema: StructType, measures: util.Map[Integer, Measure]): mutable.Iterable[Column] = {
