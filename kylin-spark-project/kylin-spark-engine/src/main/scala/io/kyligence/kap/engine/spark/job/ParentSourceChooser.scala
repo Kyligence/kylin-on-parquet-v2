@@ -24,9 +24,7 @@ import io.kyligence.kap.engine.spark.builder._
 import io.kyligence.kap.engine.spark.utils.SparkDataSource._
 import org.apache.kylin.common.KylinConfig
 import org.apache.kylin.engine.spark.metadata.cube.model.DataModel.TableKind
-import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, CuboidLayoutChooser, DataModel, DataSegment, IndexEntity, LayoutEntity, SpanningTree}
-import org.apache.kylin.engine.spark.metadata.cube.MetadataConverter
-import org.apache.kylin.metadata.model.TblColRef
+import org.apache.kylin.engine.spark.metadata.cube.model.{CubeJoinedFlatTableDesc, CuboidLayoutChooser, DataModel, DataSegment, IndexEntity, LayoutEntity, SpanningTree, TblColRef}
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
@@ -46,11 +44,13 @@ class ParentSourceChooser(toBuildTree: SpanningTree,
   // build from flattable.
   var flatTableSource: NBuildSourceInfo = _
   val flatTableDesc =
-    new CubeJoinedFlatTableDesc(seg, DFChooser.needJoinLookupTables(seg.getModel, toBuildTree))
+    new CubeJoinedFlatTableDesc(seg, ParentSourceChooser.needJoinLookupTables(seg.getModel, toBuildTree))
 
-  val flatTableDesc = new CubeJoinedFlatTableDesc(
+  //TODO: MetadataConverter don't have getCubeDesc() now
+
+  /*val flatTableDesc = new CubeJoinedFlatTableDesc(
     MetadataConverter.getCubeDesc(seg.getCube),
-    ParentSourceChooser.needJoinLookupTables(seg.getModel, toBuildTree))
+    ParentSourceChooser.needJoinLookupTables(seg.getModel, toBuildTree))*/
 
   def decideSources(): Unit = {
     toBuildTree.getRootIndexEntities.asScala.foreach { entity =>
