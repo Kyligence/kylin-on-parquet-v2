@@ -22,14 +22,13 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.Lists;
+import org.apache.kylin.engine.spark.metadata.ColumnDesc;
+import org.apache.kylin.engine.spark.metadata.FunctionDesc;
 import org.apache.kylin.metadata.model.IStorageAware;
 
 import java.util.List;
 
 public class LayoutEntity implements IStorageAware {
-    @JsonBackReference
-    private IndexEntity index;
-
     @JsonProperty("id")
     private long id;
 
@@ -51,22 +50,20 @@ public class LayoutEntity implements IStorageAware {
     @JsonProperty("shard_by_columns")
     private List<Integer> shardByColumns = Lists.newArrayList();
 
-    private ImmutableBiMap<Integer, TblColRef> orderedDimensions;
-    private ImmutableBiMap<Integer, DataModel.Measure> orderedMeasures;
+    private ImmutableBiMap<Integer, ColumnDesc> orderedDimensions;
+    private ImmutableBiMap<Integer, FunctionDesc> orderedMeasures;
+
+    long rows;
+    long sourceRows;
+    long byteSize;
+    long fileCount;
+    long shardNum;
 
     @Override
     public int getStorageType() {
         return this.storageType;
     }
 
-    public IndexEntity getIndex() {
-        return index;
-    }
-
-    public void setIndex(IndexEntity index) {
-        this.index = index;
-    }
-  
     public long getId() {
         return id;
     }
@@ -87,44 +84,12 @@ public class LayoutEntity implements IStorageAware {
         return owner;
     }
 
-    public ImmutableBiMap<Integer, TblColRef> getOrderedDimensions() { // dimension order abides by rowkey_col_desc
-        if (orderedDimensions != null)
-            return orderedDimensions;
-
-        synchronized (this) {
-            if (orderedDimensions != null)
-                return orderedDimensions;
-
-            ImmutableBiMap.Builder<Integer, TblColRef> dimsBuilder = ImmutableBiMap.builder();
-
-            for (int colId : colOrder) {
-                if (colId < DataModel.MEASURE_ID_BASE)
-                    dimsBuilder.put(colId, index.getEffectiveDimCols().get(colId));
-            }
-
-            orderedDimensions = dimsBuilder.build();
-            return orderedDimensions;
-        }
+    public ImmutableBiMap<Integer, ColumnDesc> getOrderedDimensions() { // dimension order abides by rowkey_col_desc
+        return orderedDimensions;
     }
 
-    public ImmutableBiMap<Integer, DataModel.Measure> getOrderedMeasures() { // measure order abides by column family
-        if (orderedMeasures != null)
-            return orderedMeasures;
-
-        synchronized (this) {
-            if (orderedMeasures != null)
-                return orderedMeasures;
-
-            ImmutableBiMap.Builder<Integer, DataModel.Measure> measureBuilder = ImmutableBiMap.builder();
-
-            for (int colId : colOrder) {
-                if (colId >= DataModel.MEASURE_ID_BASE)
-                    measureBuilder.put(colId, index.getEffectiveMeasures().get(colId));
-            }
-
-            orderedMeasures = measureBuilder.build();
-            return orderedMeasures;
-        }
+    public ImmutableBiMap<Integer, FunctionDesc> getOrderedMeasures() { // measure order abides by column family
+        return orderedMeasures;
     }
 
     public void setOwner(String owner) {
@@ -133,5 +98,54 @@ public class LayoutEntity implements IStorageAware {
 
     public List<Integer> getShardByColumns() {
         return shardByColumns;
+    }
+
+    public boolean fullyDerive(LayoutEntity child) {
+       return orderedDimensions.keySet().containsAll(child.orderedDimensions.keySet()) &&
+                orderedMeasures.keySet().containsAll(child.orderedMeasures.keySet()) ;
+    }
+
+    public long getByteSize() {
+        return byteSize;
+    }
+
+    public void setByteSize(long byteSize) {
+        this.byteSize = byteSize;
+    }
+
+    public long getRows() {
+        return rows;
+    }
+
+    public void setRows(long rows) {
+        this.rows = rows;
+    }
+
+    public long getFileCount() {
+        return fileCount;
+    }
+
+    public void setFileCount(long fileCount) {
+        this.fileCount = fileCount;
+    }
+
+    public long getSourceRows() {
+        return sourceRows;
+    }
+
+    public void setSourceRows(long sourceRows) {
+        this.sourceRows = sourceRows;
+    }
+
+    public long getShardNum() {
+        return shardNum;
+    }
+
+    public void setShardNum(long shardNum) {
+        this.shardNum = shardNum;
+    }
+
+    public boolean isTableIndex() {
+        return orderedMeasures.isEmpty();
     }
 }
