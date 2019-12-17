@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.kylin.engine.spark.metadata
 
 
@@ -7,7 +25,7 @@ import org.apache.spark.sql.util.SparkTypeUtil
 
 import scala.collection.JavaConverters._
 import org.apache.kylin.metadata.datatype.{DataType => KyDataType}
-import org.apache.kylin.metadata.model.TblColRef
+import org.apache.kylin.metadata.model.{DataModelDesc, JoinTableDesc, TableRef, TblColRef}
 
 object MetadataConverter {
   def getSegmentInfo(cubeInstance: CubeInstance): SegmentInfo = {
@@ -17,6 +35,27 @@ object MetadataConverter {
 
   def getCubeUpdate(segmentInfo: SegmentInfo): CubeUpdate = {
     null
+  }
+
+
+  def extractJoinTable(cubeInstance: CubeInstance): Array[JoinDesc] = {
+    cubeInstance.getModel.getAllTables
+      .asScala
+      .map(tb => toTableDesc(tb))
+
+    cubeInstance.getModel.getJoinTables
+      .map(join => toJoinDesc(join))
+  }
+
+  def toJoinDesc(joinTableDesc: JoinTableDesc): JoinDesc = {
+    val desc = toTableDesc(joinTableDesc.getTableRef)
+    val PKS = joinTableDesc.getJoin.getPrimaryKeyColumns.map(col => toColumnDesc(ref = col))
+    val FKS = joinTableDesc.getJoin.getForeignKeyColumns.map(col => toColumnDesc(ref = col))
+    JoinDesc(desc, PKS, FKS, joinTableDesc.getJoin.getType, joinTableDesc.getKind.equals(DataModelDesc.TableKind.LOOKUP))
+  }
+
+  def toTableDesc(tb: TableRef): TableDesc = {
+    TableDesc(tb.getTableName, tb.getTableDesc.getDatabase, tb.getColumns.asScala.map(ref => toColumnDesc(ref = ref)).toList, tb.getAlias, 9)
   }
 
   def extractEntity(cubeInstance: CubeInstance): List[LayoutEntity] = {
@@ -44,7 +83,7 @@ object MetadataConverter {
         val dataType = measure.getFunction.getReturnDataType
         (Integer.valueOf(index), FunctionDesc(measure.getName, DTType(dataType.getName, dataType.getPrecision),
           parametrs, measure.getFunction.getExpression))
-      } .toMap.asJava
+      }.toMap.asJava
 
     cubeInstance.getDescriptor.getInitialCuboidScheduler
       .getAllCuboidIds
@@ -59,10 +98,11 @@ object MetadataConverter {
       }.toList
   }
 
-  private def toColumnDesc(index: Int, ref: TblColRef) = {
+  private def toColumnDesc(index: Int = -1, ref: TblColRef) = {
     val dataType = SparkTypeUtil.toSparkType(KyDataType.getType(ref.getDatatype))
     val columnDesc = if (ref.getColumnDesc.isComputedColumn) {
-      ComputedColumnDesc(ref.getName, dataType, ref.getTableRef.getTableName, ref.getTableRef.getAlias, index, ref.getExpressionInSourceDB)
+      ComputedColumnDesc(ref.getName, dataType, ref.getTableRef.getTableName, ref.getTableRef.getAlias,
+        index, ref.getExpressionInSourceDB)
     } else {
       ColumnDesc(ref.getName, dataType, ref.getTableRef.getTableName, ref.getTableRef.getAlias, index)
     }
