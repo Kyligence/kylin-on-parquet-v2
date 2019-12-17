@@ -44,7 +44,7 @@ case class DTType(dataType: String, precision: Int) {
   }
 }
 
-case class JoinDesc(factTable: TableDesc, lookupTable: TableDesc, FKS: List[ColumnDesc], PKS: List[ColumnDesc], joinType: String)
+case class JoinDesc(lookupTable: TableDesc, PKS: Array[ColumnDesc], FKS: Array[ColumnDesc], joinType: String, isLookup: Boolean)
 
 case class SegmentInfo(id: String,
   project: String,
