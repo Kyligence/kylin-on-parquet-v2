@@ -5,16 +5,17 @@ import org.apache.kylin.engine.spark.metadata.cube.model.LayoutEntity
 import org.apache.spark.sql.types.{DataType, StructField, StructType}
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 class ColumnDesc(val columnName: String, val dataType: DataType, val tableName: String, val tableAliasName: String, val id: Int) {
   def identity: String = s"$tableAliasName.$columnName"
 
   def isColumnType: Boolean = true
 }
+object ColumnDesc{
+  def apply(columnName: String, dataType: DataType, tableName: String, tableAliasName: String, id: Int): ColumnDesc = new ColumnDesc(columnName, dataType, tableName, tableAliasName, id)
+}
 
-
-class LiteralColumnDesc(
+case class LiteralColumnDesc(
   override val columnName: String, override val dataType: DataType,
   override val tableName: String, override val tableAliasName: String, override val id: Int, val value: Any)
   extends ColumnDesc(columnName, dataType, tableName, tableAliasName, id) {
@@ -22,7 +23,7 @@ class LiteralColumnDesc(
 
 }
 
-class ComputedColumnDesc(
+case class ComputedColumnDesc(
   override val columnName: String, override val dataType: DataType,
   override val tableName: String, override val tableAliasName: String, override val id: Int, val expression: String = "")
   extends ColumnDesc(columnName, dataType, tableName, tableAliasName, id)
