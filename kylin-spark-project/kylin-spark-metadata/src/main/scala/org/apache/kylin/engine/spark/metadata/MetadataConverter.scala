@@ -28,7 +28,7 @@ import org.apache.kylin.metadata.datatype.{DataType => KyDataType}
 import org.apache.kylin.metadata.model.{DataModelDesc, JoinTableDesc, TableRef, TblColRef}
 
 object MetadataConverter {
-  def getSegmentInfo(cubeInstance: CubeInstance): SegmentInfo = {
+  def getSegmentInfo(cubeInstance: CubeInstance, segmentId: String): SegmentInfo = {
     extractEntity(cubeInstance)
     null
   }
