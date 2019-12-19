@@ -67,13 +67,9 @@ object MetadataConverter {
     val table = cubeInstance.getModel.getJoinsTree.getTableChains
       .asScala.keys.toArray // must to be order
       .filter(!_.equals(cubeInstance.getModel.getRootFactTable.getAlias))
-
-
-
     val tableMap = cubeInstance.getModel.getJoinTables
       .map(join => (join.getAlias, toJoinDesc(join)))
       .toMap
-
     table.map(tableMap.apply)
   }
 
@@ -152,6 +148,7 @@ object MetadataConverter {
         val dimension = BitUtils.tailor(values.asJava, long)
         val orderDimension = dimension.asScala.map(index => (index, allColumnDesc.apply(index))).toMap.asJava
         val entity = new LayoutEntity()
+        entity.setId(long)
         entity.setOrderedDimensions(orderDimension)
         entity.setOrderedMeasures(measureId)
         entity
@@ -167,20 +164,6 @@ object MetadataConverter {
       ColumnDesc(ref.getName, dataType, ref.getTableRef.getTableName, ref.getTableRef.getAlias, index)
     }
     columnDesc
-  }
-
-  private def tailor(complete: List[Int], cuboidId: Long): Array[Integer] = {
-    val bitCount = java.lang.Long.bitCount(cuboidId)
-    val ret: Array[Integer] = new Array[Integer](bitCount)
-    var next: Int = 0
-    val size: Int = complete.size
-    for (i <- 0 until size) {
-      val shift: Int = size - i - 1
-      if ((cuboidId & (1L << shift)) != 0)
-        ret(next) = complete.apply(i)
-      next = next + 1
-    }
-    ret
   }
   
   // Identical to AllDictColumns for now
@@ -201,7 +184,7 @@ object MetadataConverter {
           )
         })
         .toSet
-  
+
   def extractPartitionExp(cubeSegment: CubeSegment): String = {
     val partitionDesc = cubeSegment.getModel.getPartitionDesc
     partitionDesc.setPartitionDateFormat(DateFormat.COMPACT_DATE_PATTERN)

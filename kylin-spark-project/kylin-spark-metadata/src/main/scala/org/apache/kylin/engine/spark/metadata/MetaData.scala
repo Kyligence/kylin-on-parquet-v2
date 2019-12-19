@@ -30,7 +30,8 @@ class ColumnDesc(val columnName: String, val dataType: DataType, val tableName: 
   def isColumnType: Boolean = true
 }
 object ColumnDesc{
-  def apply(columnName: String, dataType: DataType, tableName: String, tableAliasName: String, id: Int): ColumnDesc = new ColumnDesc(columnName, dataType, tableName, tableAliasName, id)
+  def apply(columnName: String, dataType: DataType, tableName: String, tableAliasName: String, id: Int):
+  ColumnDesc = new ColumnDesc(columnName, dataType, tableName, tableAliasName, id)
 }
 
 case class LiteralColumnDesc(
