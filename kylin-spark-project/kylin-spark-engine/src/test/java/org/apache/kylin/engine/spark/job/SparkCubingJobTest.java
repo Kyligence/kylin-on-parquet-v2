@@ -22,7 +22,6 @@ import io.kyligence.kap.engine.spark.job.NSparkCubingJob;
 import org.apache.kylin.common.KylinConfig;
 import org.apache.kylin.common.persistence.ResourceTool;
 import org.apache.kylin.common.util.HBaseMetadataTestCase;
-import org.apache.kylin.common.util.LocalFileMetadataTestCase;
 import org.apache.kylin.cube.CubeDescManager;
 import org.apache.kylin.cube.CubeInstance;
 import org.apache.kylin.cube.CubeManager;
@@ -105,7 +104,7 @@ public class SparkCubingJobTest extends LocalWithSparkSessionTest {
 
         CubeSegment segment2 = cubeManager.appendSegment(cubeInstance, new SegmentRange.TSRange(date2, date3));
         NSparkCubingJob job2 = NSparkCubingJob.create(Sets.newHashSet(segment2), "ADMIN");
-        jobService.addJob(job);
+        jobService.addJob(job2);
         // wait job done
         ExecutableState state2 = waitForJob(job2.getId());
         state = wait(job2);
