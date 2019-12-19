@@ -26,6 +26,7 @@ import org.apache.kylin.common.util.DateFormat
 import org.apache.kylin.cube.{CubeInstance, CubeSegment, CubeUpdate}
 import org.apache.kylin.engine.spark.metadata.cube.model.LayoutEntity
 import org.apache.kylin.engine.spark.metadata.cube.BitUtils
+import org.apache.kylin.measure.bitmap.BitmapMeasureType
 import org.apache.spark.sql.util.SparkTypeUtil
 
 import scala.collection.JavaConverters._
@@ -41,8 +42,8 @@ object MetadataConverter {
     SegmentInfo(segmentId, cubeInstance.getProject, cubeInstance.getConfig, extractFactTable(cubeInstance),
       extractLookupTable(cubeInstance), List.empty[TableDesc],
       extractJoinTable(cubeInstance), allColumnDesc.values.toList, ine, mutable.Set[LayoutEntity](ine: _*),
-      Set.empty[ColumnDesc],
-      Set.empty[ColumnDesc],
+      extractToBuildDictColumns(cubeInstance.getSegmentById(segmentId)),
+      extractAllDictColumns(cubeInstance.getSegmentById(segmentId)),
       extractPartitionExp(cubeInstance.getSegmentById(segmentId)),
       extractFilterCondition(cubeInstance.getSegmentById(segmentId)))
   }
@@ -181,6 +182,25 @@ object MetadataConverter {
     }
     ret
   }
+  
+  // Identical to AllDictColumns for now
+  def extractToBuildDictColumns(cubeSegment: CubeSegment): Set[ColumnDesc] = extractAllDictColumns(cubeSegment)
+  
+  def extractAllDictColumns(cubeSegment: CubeSegment): Set[ColumnDesc] = cubeSegment.getCubeDesc.getMeasures
+      .asScala.filter(measure =>
+        measure.getFunction().getReturnDataType().getName().equalsIgnoreCase(BitmapMeasureType.DATATYPE_BITMAP))
+        .map(measure => {
+          val colRef = measure.getFunction().getParameter().getColRef
+          val columnDesc = colRef.getColumnDesc
+          
+          ColumnDesc(columnDesc.getName,
+            SparkTypeUtil.kylinTypeToSparkResultType(columnDesc.getType),
+            colRef.getTableRef.getTableName,
+            colRef.getTableRef.getAlias,
+            columnDesc.getId.toInt
+          )
+        })
+        .toSet
   
   def extractPartitionExp(cubeSegment: CubeSegment): String = {
     val partitionDesc = cubeSegment.getModel.getPartitionDesc
