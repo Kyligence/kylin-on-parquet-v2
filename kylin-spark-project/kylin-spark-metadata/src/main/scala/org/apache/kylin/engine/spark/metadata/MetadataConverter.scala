@@ -37,12 +37,14 @@ import scala.collection.mutable
 object MetadataConverter {
   def getSegmentInfo(cubeInstance: CubeInstance, segmentId: String): SegmentInfo = {
     val allColumnDesc = extractAllColumnDesc(cubeInstance)
-    val ine = extractEntity(cubeInstance)
+    val (layoutEntities, measure) = extractEntityAndMeasures(cubeInstance)
+    val dictColumn = measure.asScala.values.filter(_.returnType.dataType.equals("bitmap"))
+      .map(_.pra.head).toSet
     SegmentInfo(segmentId, cubeInstance.getProject, cubeInstance.getConfig, extractFactTable(cubeInstance),
       extractLookupTable(cubeInstance), List.empty[TableDesc],
-      extractJoinTable(cubeInstance), allColumnDesc.values.toList, ine, mutable.Set[LayoutEntity](ine: _*),
-      Set.empty[ColumnDesc],
-      Set.empty[ColumnDesc],
+      extractJoinTable(cubeInstance), allColumnDesc.values.toList, layoutEntities, mutable.Set[LayoutEntity](layoutEntities: _*),
+      dictColumn,
+      dictColumn,
       extractPartitionExp(cubeInstance.getSegmentById(segmentId)),
       extractFilterCondition(cubeInstance.getSegmentById(segmentId)))
   }
@@ -101,7 +103,7 @@ object MetadataConverter {
   }
 
 
-  def extractEntity(cubeInstance: CubeInstance): List[LayoutEntity] = {
+  def extractEntityAndMeasures(cubeInstance: CubeInstance): (List[LayoutEntity], java.util.Map[Integer, FunctionDesc]) = {
     val dimensionMapping = cubeInstance.getDescriptor
       .getRowkey
       .getRowKeyColumns
@@ -140,7 +142,7 @@ object MetadataConverter {
           parametrs, measure.getFunction.getExpression))
       }.toMap.asJava
 
-    cubeInstance.getDescriptor.getInitialCuboidScheduler
+    (cubeInstance.getDescriptor.getInitialCuboidScheduler
       .getAllCuboidIds
       .asScala
       .map { long =>
@@ -151,7 +153,7 @@ object MetadataConverter {
         entity.setOrderedDimensions(orderDimension)
         entity.setOrderedMeasures(measureId)
         entity
-      }.toList
+      }.toList, measureId)
   }
 
   private def toColumnDesc(ref: TblColRef, index: Int = -1) = {
