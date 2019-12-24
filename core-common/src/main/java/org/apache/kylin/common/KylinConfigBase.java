@@ -2365,7 +2365,7 @@ public abstract class KylinConfigBase implements Serializable {
     }
 
     public String getJobTmpDir(String project) {
-        return getHdfsWorkingDirectory(project) + "job_tmp/";
+        return getHdfsWorkingDirectory() + project + "/job_tmp/";
     }
 
     public int getPersistFlatTableThreshold() {
