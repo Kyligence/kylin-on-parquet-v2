@@ -738,6 +738,44 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.11</artifactId>
+        <exclusions>
+          <exclusion>
+            <artifactId>jetty-plus</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-security</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-util</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-server</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-http</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-continuation</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-proxy</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-client</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>jetty-servlets</artifactId>
+            <groupId>org.eclipse.jetty</groupId>
+          </exclusion>
+        </exclusions>
         <version>${spark.version}</version>
         <scope>provided</scope>
       </dependency>
@@ -752,6 +790,11 @@
         <artifactId>spark-hive_2.11</artifactId>
         <version>${spark.version}</version>
         <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-yarn_2.11</artifactId>
+        <version>${spark.version}</version>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware</groupId>
@@ -1051,6 +1094,35 @@
         <version>${curator.version}</version>
         <scope>test</scope>
       </dependency>
+
+      <!-- Spark dependency -->
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-sql_2.11</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-hive_2.11</artifactId>
+        <version>${spark.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-unsafe_2.11</artifactId>
+        <version>${spark.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-all</artifactId>
+        <version>4.1.17.Final</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty</artifactId>
+        <version>3.9.9.Final</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -1346,7 +1418,6 @@
     <module>source-kafka</module>
     <module>storage-hbase</module>
     <module>query</module>
-    <module>kylin-spark-project</module>
     <module>server-base</module>
     <module>server</module>
     <module>jdbc</module>
@@ -1365,6 +1436,8 @@
     <module>stream-coordinator</module>
     <module>stream-core</module>
     <module>stream-source-kafka</module>
+    <module>kylin-spark-project</module>
+    <module>parquet-assembly</module>
   </modules>
 
   <reporting>

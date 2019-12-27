@@ -24,6 +24,7 @@ import org.apache.kylin.common.util.LocalFileMetadataTestCase;
 import org.apache.kylin.job.execution.AbstractExecutable;
 import org.apache.kylin.job.execution.ExecutableState;
 import org.apache.spark.SparkConf;
+import org.apache.spark.sql.KylinSparkEnv;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.internal.StaticSQLConf;
 import org.junit.BeforeClass;
@@ -55,7 +56,7 @@ public class LocalWithSparkSessionTest extends LocalFileMetadataTestCase impleme
         sparkConf.set("spark.sql.crossJoin.enabled", "true");
 
         ss = SparkSession.builder().config(sparkConf).getOrCreate();
-        SparkEnv.setSparkSession(ss);
+        KylinSparkEnv.setSparkSession(ss);
 
         System.out.println("Check spark sql config [spark.sql.catalogImplementation = "
                 + ss.conf().get("spark.sql.catalogImplementation") + "]");
