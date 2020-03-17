@@ -24,12 +24,14 @@ package org.apache.spark.sql
 
 import org.apache.kylin.cube.CubeInstance
 import org.apache.kylin.cube.cuboid.Cuboid
-import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.SparkSession
+import org.apache.kylin.metadata.model.TblColRef
 import org.apache.spark.sql.execution.datasource.FilePruner
 import org.apache.spark.sql.execution.datasources.HadoopFsRelation
 import org.apache.spark.sql.execution.datasources.parquet.ParquetFileFormat
+import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.utils.SparkTypeUtil
 
+import scala.collection.JavaConverters
 import scala.collection.mutable.{HashMap => MutableHashMap}
 
 
@@ -74,7 +76,12 @@ class KylinDataFrameManager(sparkSession: SparkSession) {
     option("project", cubeInstance.getProject)
     option("dataflowId", cubeInstance.getUuid)
     option("cuboidId", layout.getId)
-    val indexCatalog = new FilePruner(cubeInstance, layout, sparkSession, options = extraOptions.toMap, StructType(Seq()))
+    val columns = JavaConverters.asScalaIteratorConverter(cubeInstance.getAllColumns.iterator()).asScala.toSeq
+    val schema = StructType(columns.map(column =>
+      StructField(column.getName, SparkTypeUtil.toSparkType(column.getType))
+    ))
+
+    val indexCatalog = new FilePruner(cubeInstance, layout, sparkSession, options = extraOptions.toMap, schema)
     sparkSession.baseRelationToDataFrame(
       HadoopFsRelation(
         indexCatalog,
@@ -86,12 +93,12 @@ class KylinDataFrameManager(sparkSession: SparkSession) {
   }
 
   /**
-   * Specifies the input schema. Some data sources (e.g. JSON) can infer the input schema
-   * automatically from data. By specifying the schema here, the underlying data source can
-   * skip the schema inference step, and thus speed up data loading.
-   *
-   * @since 1.4.0
-   */
+    * Specifies the input schema. Some data sources (e.g. JSON) can infer the input schema
+    * automatically from data. By specifying the schema here, the underlying data source can
+    * skip the schema inference step, and thus speed up data loading.
+    *
+    * @since 1.4.0
+    */
   def schema(schema: StructType): KylinDataFrameManager = {
     this.userSpecifiedSchema = Option(schema)
     this
