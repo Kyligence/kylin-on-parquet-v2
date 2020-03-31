@@ -45,11 +45,11 @@ public class CsvSource implements ISource {
                 KylinConfig kylinConfig = KylinBuildEnv.get().kylinConfig();
                 if (kylinConfig.getDeployEnv().equals("UT")) {
                     path = "file:///" + new File(getUtMetaDir(),
-                            "../../examples/test_case_data/localmeta_n/data/" + table.identity() + ".csv")
+                            "../../examples/test_case_data/parquet_test/data/" + table.identity() + ".csv")
                                     .getAbsolutePath();
                 } else {
                     String project = parameters.get("project") == null ? "" : parameters.get("project") + "/";
-                    path = KylinBuildEnv.get().kylinConfig().getHdfsWorkingDirectory() + project + "csv/"
+                    path = KylinBuildEnv.get().kylinConfig().getHdfsWorkingDirectory() + project + "data/"
                             + table.identity() + ".csv";
                 }
                 Dataset<Row> delimiter = ss.read().option("delimiter", ",")
