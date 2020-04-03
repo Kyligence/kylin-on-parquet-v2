@@ -20,19 +20,21 @@
  *
  */
 
-package io.kyligence.kap.engine.spark.job
+package org.apache.kylin.engine.spark.job
 
 import java.io.File
 import java.util
 
 import com.google.common.collect.Lists
-import io.kyligence.kap.engine.spark.storage.ParquetStorage
-import io.kyligence.kap.engine.spark.utils.{BuildUtils, Repartitioner}
-import io.kyligence.kap.metadata.cube.model.NIndexPlanManager
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.{ContentSummary, FSDataOutputStream, Path}
 import org.apache.kylin.common.KylinConfig
-import org.apache.kylin.common.util.HadoopUtil
+import org.apache.kylin.common.util.{DateFormat, HadoopUtil}
+import org.apache.kylin.cube.CubeManager
+import org.apache.kylin.engine.spark.metadata.MetadataConverter
+import org.apache.kylin.engine.spark.storage.ParquetStorage
+import org.apache.kylin.engine.spark.utils.{BuildUtils, Repartitioner}
+import org.apache.kylin.metadata.model.SegmentRange.TSRange
 import org.apache.spark.sql.common.{LocalMetadata, SharedSparkSession}
 import org.apache.spark.sql.types.{StringType, StructType}
 import org.apache.spark.sql.{Column, Dataset, Row}
@@ -43,9 +45,9 @@ import org.scalatest.WordSpec
 
 
 
-class TestDFBuildJob extends WordSpec with MockFactory with SharedSparkSession with LocalMetadata {
+class TestCubeBuildJob extends WordSpec with MockFactory with SharedSparkSession with LocalMetadata {
   private val path = "./test"
-  private val tempPath = path + DFBuildJob.TEMP_DIR_SUFFIX
+  private val tempPath = path + CubeBuildJob.TEMP_DIR_SUFFIX
   private val storage = new ParquetStorage()
 
   override def beforeAll(): Unit = {
@@ -139,9 +141,19 @@ class TestDFBuildJob extends WordSpec with MockFactory with SharedSparkSession w
 
   "layout" should{
     "has countDistinct" in {
-         val manager = NIndexPlanManager.getInstance(KylinConfig.getInstanceFromEnv, "default")
-      val entity = manager.getIndexPlan("741ca86a-1f13-46da-a59f-95fb68615e3a").getIndexEntity(1000000).getLastLayout
-      Assert.assertTrue(BuildUtils.findCountDistinctMeasure(entity))
+      val cubeManager = CubeManager.getInstance(KylinConfig.getInstanceFromEnv)
+      val cube = cubeManager.getCube("ci_left_join_cube")
+      var seg = cube.getLastSegment
+      if (cube.getLastSegment == null) {
+        val range = new TSRange(0L, DateFormat.stringToMillis("2015-01-01"))
+        seg = cubeManager.appendSegment(cube, range)
+      }
+      val layoutEntities = MetadataConverter.extractEntityList2JavaList(seg.getCubeInstance)
+      val iter = layoutEntities.iterator
+      while (iter.hasNext) {
+        val entity = iter.next
+        Assert.assertTrue(BuildUtils.findCountDistinctMeasure(entity))
+      }
     }
   }
 
