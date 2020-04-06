@@ -66,6 +66,7 @@ public class AfterMergeOrRefreshResourceMerger extends MetadataMerger {
 
         List<CubeSegment> toRemoveSegments = getToRemoveSegs(distCube, mergedSegment);
         if (String.valueOf(JobTypeEnum.INDEX_MERGE).equals(jobType)) {
+            makeSnapshotForNewSegment(mergedSegment, toRemoveSegments);
             Optional<Long> reduce = toRemoveSegments.stream().map(CubeSegment::getSizeKB).filter(size -> size != -1)
                     .reduce(Long::sum);
             Optional<Long> inputRecords = toRemoveSegments.stream().map(CubeSegment::getInputRecords).filter(records -> records != -1)
@@ -106,6 +107,13 @@ public class AfterMergeOrRefreshResourceMerger extends MetadataMerger {
         }
 
         return toRemoveSegs;
+    }
+
+    private void makeSnapshotForNewSegment(CubeSegment segMerged, List<CubeSegment> mergingSegments) {
+        CubeSegment lastSeg = mergingSegments.get(mergingSegments.size() - 1);
+        for (Map.Entry<String, String> entry : lastSeg.getSnapshots().entrySet()) {
+            segMerged.putSnapshotResPath(entry.getKey(), entry.getValue());
+        }
     }
 
     @Override
