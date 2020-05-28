@@ -48,13 +48,16 @@ public class HDFSResourceStore extends ResourceStore {
 
     public static final String HDFS_SCHEME = "hdfs";
 
+    public static final String ALLUXIO_SCHEME = "alluxio";
+
     public HDFSResourceStore(KylinConfig kylinConfig) throws Exception {
         this(kylinConfig, kylinConfig.getMetadataUrl());
     }
 
     public HDFSResourceStore(KylinConfig kylinConfig, StorageURL metadataUrl) throws Exception {
         super(kylinConfig);
-        Preconditions.checkState(HDFS_SCHEME.equals(metadataUrl.getScheme()));
+        Preconditions.checkState(HDFS_SCHEME.equals(metadataUrl.getScheme()) ||
+                ALLUXIO_SCHEME.equals(metadataUrl.getScheme()));
 
         String path = metadataUrl.getParameter("path");
         if (path == null) {

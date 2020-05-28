@@ -87,6 +87,10 @@ public class HadoopUtil {
         if (StringUtils.isBlank(conf.get("hbase.fs.tmp.dir"))) {
             conf.set("hbase.fs.tmp.dir", "/tmp");
         }
+        // https://issues.apache.org/jira/browse/KYLIN-4501
+        if (StringUtils.isBlank(conf.get("fs.alluxio.impl"))) {
+            conf.set("fs.alluxio.impl", "alluxio.hadoop.FileSystem");
+        }
         //  https://issues.apache.org/jira/browse/KYLIN-3064
         conf.set("yarn.timeline-service.enabled", "false");
         return conf;
