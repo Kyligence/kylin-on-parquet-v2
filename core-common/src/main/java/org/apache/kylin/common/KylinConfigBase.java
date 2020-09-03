@@ -39,7 +39,6 @@ import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.kylin.common.lock.DistributedLockFactory;
-import org.apache.kylin.common.persistence.HDFSResourceStore;
 import org.apache.kylin.common.util.ClassUtil;
 import org.apache.kylin.common.util.CliCommandExecutor;
 import org.apache.kylin.common.util.FileUtils;
@@ -466,6 +465,7 @@ public abstract class KylinConfigBase implements Serializable {
         r.put("", "org.apache.kylin.common.persistence.FileResourceStore");
         r.put("hbase", "org.apache.kylin.storage.hbase.HBaseResourceStore");
         r.put("hdfs", "org.apache.kylin.common.persistence.HDFSResourceStore");
+        r.put("alluxio", "org.apache.kylin.common.persistence.AlluxioResourceStore");
         r.put("ifile", "org.apache.kylin.common.persistence.IdentifierFileResourceStore");
         r.put("jdbc", "org.apache.kylin.common.persistence.JDBCResourceStore");
         r.putAll(getPropertiesByPrefix("kylin.metadata.resource-store-provider.")); // note the naming convention -- http://kylin.apache.org/development/coding_naming_convention.html
@@ -1257,8 +1257,8 @@ public abstract class KylinConfigBase implements Serializable {
         String url = getOptional("kylin.storage.url", "default@hbase");
 
         // for backward compatibility
-        if ("hbase".equals(url))
-            url = "default@hbase";
+        if (url.lastIndexOf('@') < 0)
+            url = "default@" + url;
 
         return StorageURL.valueOf(url);
     }
@@ -2565,7 +2565,7 @@ public abstract class KylinConfigBase implements Serializable {
     public StorageURL getJobTmpMetaStoreUrl(String project, String jobId) {
         Map<String, String> params = new HashMap<>();
         params.put("path", getJobTmpDir(project) + getNestedPath(jobId) + "meta");
-        return new StorageURL(getMetadataUrlPrefix(), HDFSResourceStore.HDFS_SCHEME, params);
+        return new StorageURL(getMetadataUrlPrefix(), getStorageUrl().getScheme(), params);
     }
 
     public Path getJobTmpShareDir(String project, String jobId) {

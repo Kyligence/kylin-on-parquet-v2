@@ -114,7 +114,7 @@ public class MetaDumpUtil {
     public static KylinConfig loadKylinConfigFromHdfs(String uri) {
         if (uri == null)
             throw new IllegalArgumentException("StorageUrl should not be null");
-        if (!uri.contains("@hdfs"))
+        if (!(uri.contains("@hdfs") || uri.contains("@alluxio")))
             throw new IllegalArgumentException("StorageUrl should like @hdfs schema");
         logger.info("Ready to load KylinConfig from uri: {}", uri);
         StorageURL url = StorageURL.valueOf(uri);
